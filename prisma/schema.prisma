@@ -1,0 +1,140 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  FINISHED
+}
+
+enum PaymentMethod {
+  STRIPE
+  CASH
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum TicketStatus {
+  ISSUED
+  USED
+  CANCELLED
+  REFUNDED
+}
+
+model Event {
+  id                   String      @id @default(uuid())
+  organizerId          String
+
+  name                 String
+  description          String?
+  bannerImage          String?
+
+  startsAt             DateTime
+  endsAt               DateTime
+
+  location             String?
+  onlineUrl            String?
+
+  status               EventStatus @default(DRAFT)
+
+  requiresNamedTickets Boolean     @default(false)
+
+  capacity             Int         @default(0)
+
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  ticketTypes         TicketType[]
+  orders              Order[]
+}
+
+model TicketType {
+  id            String   @id @default(uuid())
+
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String?
+
+  price         Int
+  quantity      Int
+  sold          Int      @default(0)
+
+  customFields  Json?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tickets       Ticket[]
+}
+
+model Order {
+  id              String   @id @default(uuid())
+
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  buyerName       String?
+  buyerEmail      String?
+
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus @default(PENDING)
+
+  stripeSessionId String?
+
+  totalAmount     Int
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tickets         Ticket[]
+}
+
+model Ticket {
+  id                String   @id @default(uuid())
+
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  ticketTypeId      String
+  ticketType        TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
+
+  code              String   @unique
+
+  status            TicketStatus @default(ISSUED)
+
+  holderName        String?
+  holderEmail       String?
+
+  customFieldValues Json?
+
+  issuedAt          DateTime @default(now())
+  usedAt            DateTime?
+
+  checkIns          CheckIn[]
+}
+
+model CheckIn {
+  id        String   @id @default(uuid())
+
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  scannedAt DateTime @default(now())
+
+  gate      String?
+}
