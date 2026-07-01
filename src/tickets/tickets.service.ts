@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  PreconditionFailedException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DbService } from '../db/db.service';
 
@@ -12,31 +16,59 @@ export class TicketsService {
     });
   }
 
-  findAll() {
-    return this.db.ticketType.findMany();
-  }
-
-  findOne(id: string) {
-    return this.db.ticketType.findUnique({
+  findAll(eventId: string) {
+    return this.db.ticketType.findMany({
       where: {
-        id: id,
+        eventId: eventId,
       },
     });
   }
 
-  update(id: string, updateTicketDto: Prisma.TicketTypeUpdateInput) {
+  findOne(eventId: string, id: string) {
+    return this.db.ticketType.findUnique({
+      where: {
+        id: id,
+        eventId: eventId,
+      },
+    });
+  }
+
+  update(
+    eventId: string,
+    id: string,
+    updateTicketDto: Prisma.TicketTypeUpdateInput,
+  ) {
     return this.db.ticketType.update({
       where: {
         id: id,
+        eventId: eventId,
       },
       data: updateTicketDto,
     });
   }
 
-  remove(id: string) {
+  async remove(eventId: string, id: string, force: boolean) {
+    const ticket = await this.db.ticketType.findUnique({
+      where: {
+        id: id,
+        eventId: eventId,
+      },
+    });
+
+    if (!ticket) {
+      throw new NotFoundException(`Ticket with ID ${id} not found`);
+    }
+
+    if(force && ticket.sold >= 0) {
+      throw new PreconditionFailedException(
+        `Ticket with ID ${id} already has sales, and this remove is not forced.`,
+      );
+    }
+
     return this.db.ticketType.delete({
       where: {
         id: id,
+        eventId: eventId,
       },
     });
   }
