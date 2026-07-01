@@ -25,7 +25,7 @@ export class OrdersController {
 	}
 
 	@Get('webhook/stripe')
-	stripe(){
-		throw new NotImplementedException('Stripe is not Implemented yet');
+	stripe() {
+		return this.ordersService.stripePayment();
 	}
 }

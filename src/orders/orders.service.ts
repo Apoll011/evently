@@ -2,6 +2,7 @@ import {
 	Injectable,
 	NotFoundException,
 	BadRequestException,
+	NotImplementedException,
 } from '@nestjs/common';
 import { CreateOrderDto, CreateOrderItem } from './dto/create-order.dto';
 import { DbService } from '../db/db.service';
@@ -143,6 +144,7 @@ export class OrdersService {
 
 	stripePayment() {
 		// if valid create tickets
+		throw new NotImplementedException('Stripe is not Implemented yet');
 	}
 
 	findOne(id: string) {
