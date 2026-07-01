@@ -32,6 +32,14 @@ export class EventsService {
 		});
 	}
 
+	checkin(id: string) {
+		return this.db.checkIn.findMany({
+			where: {
+				eventId: id,
+			},
+		});
+	}
+
 	update(id: string, updateEventDto: Prisma.EventUpdateInput) {
 		return this.db.event.update({
 			where: {

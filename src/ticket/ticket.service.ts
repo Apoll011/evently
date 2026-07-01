@@ -45,6 +45,7 @@ export class TicketService {
 		await this.db.checkIn.create({
 			data: {
 				ticketId: ticket.id,
+				eventId: ticket.eventId,
 				gate: gate,
 			},
 		});

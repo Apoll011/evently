@@ -34,6 +34,11 @@ export class EventsController {
 		return this.eventsService.stat(id);
 	}
 
+	@Get(':id/checkin')
+	checkin(@Param('id', ParseUUIDPipe) id: string) {
+		return this.eventsService.checkin(id);
+	}
+
 	@Patch(':id/publish')
 	pub(@Param('id', ParseUUIDPipe) id: string) {
 		return this.eventsService.pub(id);
