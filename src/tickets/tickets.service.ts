@@ -5,14 +5,29 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DbService } from '../db/db.service';
+import { CreateTicketDto } from './dto/create-ticket.dto';
 
 @Injectable()
 export class TicketsService {
 	constructor(private db: DbService) {}
 
-	create(createTicketDto: Prisma.TicketTypeCreateInput) {
+	async create(eventId: string, createTicketDto: CreateTicketDto) {
+		const eventExists = await this.db.event.findUnique({
+			where: { id: eventId },
+		});
+
+		if (!eventExists) {
+			throw new NotFoundException(`Event with ID ${eventId} not found`);
+		}
+
 		return this.db.ticketType.create({
-			data: createTicketDto,
+			data: {
+				eventId: eventId,
+				...createTicketDto,
+				customFields: createTicketDto.customFields
+					? JSON.parse(JSON.stringify(createTicketDto.customFields))
+					: undefined,
+			},
 		});
 	}
 

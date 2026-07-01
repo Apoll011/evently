@@ -6,7 +6,6 @@ import {
 	Patch,
 	Param,
 	Delete,
-	NotFoundException,
 	ParseUUIDPipe,
 	ParseBoolPipe,
 	Query,
@@ -28,22 +27,7 @@ export class TicketsController {
 		@Param('eventId', ParseUUIDPipe) eventId: string,
 		@Body() createTicketDto: CreateTicketDto,
 	) {
-		const eventExists = await this.db.event.findUnique({
-			where: { id: eventId },
-		});
-
-		if (!eventExists) {
-			throw new NotFoundException(`Event with ID ${eventId} not found`);
-		}
-		return this.ticketsService.create({
-			event: {
-				connect: { id: eventId },
-			},
-			...createTicketDto,
-			customFields: createTicketDto.customFields
-				? JSON.parse(JSON.stringify(createTicketDto.customFields))
-				: undefined,
-		});
+		return this.ticketsService.create(eventId, createTicketDto);
 	}
 
 	@Get()
