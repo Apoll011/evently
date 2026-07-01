@@ -6,14 +6,14 @@ Event and ticket management API. Create and manage events, define ticket types, 
 
 ## Stack
 
-| Layer     | Technology                    |
-| --------- | ----------------------------- |
-| Runtime   | Node.js                       |
-| Framework | NestJS (TypeScript)           |
-| Database  | PostgreSQL                    |
-| ORM       | Prisma                        |
-| Payments  | Stripe (optional — pluggable) |
-| Auth      | JWT (Passport)                |
+| Layer     | Technology          |
+| --------- |---------------------|
+| Runtime   | Node.js             |
+| Framework | NestJS (TypeScript) |
+| Database  | PostgreSQL          |
+| ORM       | Prisma              |
+| Payments  | Stripe              |
+| Auth      | JWT (Passport)      |
 
 ---
 
@@ -88,11 +88,11 @@ Server runs at `http://localhost:3000` by default.
 ```
 src/
   events/           # Event CRUD and stats
-  ticket-types/     # Ticket tiers per event
+  tickets/          # Ticket tiers per event
   orders/           # Order creation and payment handling
-  tickets/          # Ticket issuance and validation
+  ticket/           # Ticket issuance and validation
   auth/             # JWT authentication
-  prisma/           # Prisma client wrapper
+  db/               # Prisma client wrapper
 prisma/
   schema.prisma     # Database schema
 docker-compose.yml
@@ -124,4 +124,4 @@ See `.env.example` for all required variables.
 
 ## License
 
-MIT
+GNU
