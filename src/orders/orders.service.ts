@@ -152,4 +152,12 @@ export class OrdersService {
 			},
 		});
 	}
+
+	findTickets(id: string) {
+		return this.db.ticket.findMany({
+			where: {
+				orderId: id,
+			},
+		});
+	}
 }

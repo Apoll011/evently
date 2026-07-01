@@ -19,6 +19,11 @@ export class OrdersController {
 		return this.ordersService.create(createOrderDto);
 	}
 
+	@Get(':id/tickets')
+	findTickets(@Param('id', ParseUUIDPipe) id: string) {
+		return this.ordersService.findTickets(id);
+	}
+
 	@Get(':id')
 	findOne(@Param('id', ParseUUIDPipe) id: string) {
 		return this.ordersService.findOne(id);
