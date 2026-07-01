@@ -81,7 +81,7 @@ export class EventsService {
 
 	async stat(id: string) {
 		const [tickets, checkins, orderItems] = await Promise.all([
-			this.db.ticket.count({ where: { eventId: id, status: 'ISSUED' } }),
+			this.db.ticket.count({ where: { eventId: id } }),
 			this.db.checkIn.count({ where: { eventId: id } }),
 			this.db.orderItem.findMany({
 				where: { order: { eventId: id, paymentStatus: 'PAID' } },
