@@ -44,6 +44,7 @@ export class TicketService {
 
 		const date = new Date();
 		const start = new Date(event.startsAt);
+		start.setHours(start.getHours() - 2);
 		const end = new Date(event.endsAt);
 
 		if (!(date >= start && date <= end))

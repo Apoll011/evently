@@ -79,7 +79,20 @@ export class EventsService {
 		});
 	}
 
-	stat(id: string) {
-		return `This action returns a #${id} event stat`;
+	async stat(id: string) {
+		const [tickets, checkins, orderItems] = await Promise.all([
+			this.db.ticket.count({ where: { eventId: id, status: 'ISSUED' } }),
+			this.db.checkIn.count({ where: { eventId: id } }),
+			this.db.orderItem.findMany({
+				where: { order: { eventId: id, paymentStatus: 'PAID' } },
+				include: { ticketType: true },
+			}),
+		]);
+
+		return {
+			tickets_sold: tickets,
+			checkins: checkins,
+			orders: orderItems,
+		};
 	}
 }

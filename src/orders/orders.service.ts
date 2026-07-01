@@ -41,6 +41,18 @@ export class OrdersService {
 			},
 		});
 
+		ticketTypes.forEach((ticket) => {
+			if (
+				ticket.quantity -
+					(ticket.sold +
+						(createOrderDto.items.find(
+							(i) => i.ticketTypeId == ticket.eventId,
+						)?.quantity ?? 0)) <=
+				0
+			)
+				throw new BadRequestException('Not enough Tickets left');
+		});
+
 		const order = await this.db.order.create({
 			data: {
 				eventId: createOrderDto.eventId,
@@ -102,6 +114,15 @@ export class OrdersService {
 
 		const orderItemMap = new Map(
 			orderItemsMaker.map((o) => [o.ticketTypeId, o]),
+		);
+
+		await Promise.all(
+			orderItems.map((item) =>
+				this.db.ticketType.update({
+					where: { id: item.ticketTypeId },
+					data: { sold: { increment: item.quantity } },
+				}),
+			),
 		);
 
 		return this.db.ticket.createMany({

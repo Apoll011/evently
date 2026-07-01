@@ -29,6 +29,11 @@ export class EventsController {
 		return this.eventsService.findAll(organizerId, status);
 	}
 
+	@Get('public')
+	findPub(@Query('organizerId') organizerId?: string) {
+		return this.eventsService.findAll(organizerId, 'PUBLISHED');
+	}
+
 	@Get(':id/stat')
 	stat(@Param('id', ParseUUIDPipe) id: string) {
 		return this.eventsService.stat(id);
