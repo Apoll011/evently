@@ -1,13 +1,13 @@
 export class CreateTicketDto {
-  name: string;
-  description?: string;
-  price: number;
-  quantity: number;
-  customFields?: CustomFieldDto[];
+	name: string;
+	description?: string;
+	price: number;
+	quantity: number;
+	customFields?: CustomFieldDto[];
 }
 
 export class CustomFieldDto {
-  label: string;
-  type: 'text' | 'number' | 'email' | 'select' | 'checkbox';
-  options?: string[];
+	label: string;
+	type: 'text' | 'number' | 'email' | 'select' | 'checkbox';
+	options?: string[];
 }

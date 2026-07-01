@@ -6,14 +6,14 @@ Event and ticket management API. Create and manage events, define ticket types, 
 
 ## Stack
 
-| Layer      | Technology                        |
-|------------|-----------------------------------|
-| Runtime    | Node.js                           |
-| Framework  | NestJS (TypeScript)               |
-| Database   | PostgreSQL                        |
-| ORM        | Prisma                            |
-| Payments   | Stripe (optional — pluggable)     |
-| Auth       | JWT (Passport)                    |
+| Layer     | Technology                    |
+| --------- | ----------------------------- |
+| Runtime   | Node.js                       |
+| Framework | NestJS (TypeScript)           |
+| Database  | PostgreSQL                    |
+| ORM       | Prisma                        |
+| Payments  | Stripe (optional — pluggable) |
+| Auth      | JWT (Passport)                |
 
 ---
 
@@ -113,12 +113,12 @@ Evently supports multiple payment flows:
 
 See `.env.example` for all required variables.
 
-| Variable             | Description                        |
-|----------------------|------------------------------------|
-| `DATABASE_URL`       | PostgreSQL connection string       |
-| `JWT_SECRET`         | Secret for signing JWT tokens      |
-| `STRIPE_SECRET_KEY`  | Stripe secret key (optional)       |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret   |
+| Variable                | Description                   |
+| ----------------------- | ----------------------------- |
+| `DATABASE_URL`          | PostgreSQL connection string  |
+| `JWT_SECRET`            | Secret for signing JWT tokens |
+| `STRIPE_SECRET_KEY`     | Stripe secret key (optional)  |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
 
 ---
 
