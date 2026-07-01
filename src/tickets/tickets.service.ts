@@ -1,26 +1,43 @@
 import { Injectable } from '@nestjs/common';
-import { CreateTicketDto } from './dto/create-ticket.dto';
-import { UpdateTicketDto } from './dto/update-ticket.dto';
+import { Prisma } from '@prisma/client';
+import { DbService } from '../db/db.service';
 
 @Injectable()
 export class TicketsService {
-  create(createTicketDto: CreateTicketDto) {
-    return 'This action adds a new ticket';
+  constructor(private db: DbService) {}
+
+  create(createTicketDto: Prisma.TicketTypeCreateInput) {
+    return this.db.ticketType.create({
+      data: createTicketDto,
+    });
   }
 
   findAll() {
-    return `This action returns all tickets`;
+    return this.db.ticketType.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} ticket`;
+  findOne(id: string) {
+    return this.db.ticketType.findUnique({
+      where: {
+        id: id,
+      },
+    });
   }
 
-  update(id: number, updateTicketDto: UpdateTicketDto) {
-    return `This action updates a #${id} ticket`;
+  update(id: string, updateTicketDto: Prisma.TicketTypeUpdateInput) {
+    return this.db.ticketType.update({
+      where: {
+        id: id,
+      },
+      data: updateTicketDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} ticket`;
+  remove(id: string) {
+    return this.db.ticketType.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }
