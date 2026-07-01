@@ -100,12 +100,29 @@ docker-compose.yml
 
 ---
 
-## Payment Methods
 
-Evently supports multiple payment flows:
+## API Overview
 
-- **Stripe** — client initiates checkout, Stripe webhook confirms payment, server issues tickets
-- **Cash / In-person** — seller marks order as paid on creation, tickets issued immediately
+| Module        | Base Path                        | Description                        |
+|---------------|----------------------------------|------------------------------------|
+| Auth          | `/auth`                          | Register, login, current user      |
+| Events        | `/events`                        | CRUD, publish, cancel, stats       |
+| Ticket Types  | `/events/:eventId/ticket-types`  | Tiers per event                    |
+| Orders        | `/orders`                        | Create orders, Stripe webhook      |
+| Tickets       | `/ticket`                        | Issuance, validation, cancel/refund|
+ 
+---
+
+## Payment Flow
+
+**Online (Stripe)**
+1. Client creates an order → server returns a Stripe Checkout URL
+2. Buyer completes payment on Stripe
+3. Stripe fires a webhook → server confirms payment → tickets issued
+   **In-person (Cash)**
+1. Seller creates an order with `paymentMethod: CASH`
+2. Server marks it paid immediately → tickets issued on the spot
+   Both flows produce the same result: one `Ticket` record per unit, each with a unique code the client uses to render a QR.
 
 ---
 
