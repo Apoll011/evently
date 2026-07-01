@@ -49,6 +49,28 @@ export class EventsService {
     });
   }
 
+  pub(id: string) {
+    return this.db.event.update({
+      where: {
+        id: id,
+      },
+      data: {
+        status: EventStatus.PUBLISHED,
+      },
+    });
+  }
+
+  cancel(id: string) {
+    return this.db.event.update({
+      where: {
+        id: id,
+      },
+      data: {
+        status: EventStatus.CANCELLED,
+      },
+    });
+  }
+
   stat(id: string) {
     return `This action returns a #${id} event stat`;
   }

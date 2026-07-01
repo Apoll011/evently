@@ -33,6 +33,16 @@ export class EventsController {
     return this.eventsService.stat(id);
   }
 
+  @Patch(':id/publish')
+  pub(@Param('id') id: string) {
+    return this.eventsService.pub(id);
+  }
+
+  @Patch(':id/cancel')
+  cancel(@Param('id') id: string) {
+    return this.eventsService.cancel(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.eventsService.findOne(id);
