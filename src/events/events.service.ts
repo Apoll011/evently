@@ -1,30 +1,55 @@
 import { Injectable } from '@nestjs/common';
-import { CreateEventDto, type eventStatus } from './dto/create-event.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
+import { EventStatus, Prisma } from '@prisma/client';
+import { DbService } from '../db/db.service';
 
 @Injectable()
 export class EventsService {
-  create(createEventDto: CreateEventDto) {
-    return 'This action adds a new event';
+  constructor(private db: DbService) {}
+
+  async create(createEventDto: Prisma.EventCreateInput) {
+    return this.db.event.create({
+      data: createEventDto,
+    });
   }
 
-  findAll(organizerId?: string, status?: eventStatus) {
-    return `This action returns all events`;
+  findAll(organizerId?: string, status?: EventStatus) {
+    if (status || organizerId) {
+      return this.db.event.findMany({
+        where: {
+          status: status,
+          organizerId: organizerId,
+        },
+      });
+    }
+    return this.db.event.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} event`;
+  findOne(id: string) {
+    return this.db.event.findUnique({
+      where: {
+        id: id,
+      },
+    });
   }
 
-  update(id: number, updateEventDto: UpdateEventDto) {
-    return `This action updates a #${id} event`;
+  update(id: string, updateEventDto: Prisma.EventUpdateInput) {
+    return this.db.event.update({
+      where: {
+        id: id,
+      },
+      data: updateEventDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} event`;
+  remove(id: string) {
+    return this.db.event.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 
-  stat(id: number) {
+  stat(id: string) {
     return `This action returns a #${id} event stat`;
   }
 }
