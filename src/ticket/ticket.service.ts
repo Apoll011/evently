@@ -4,6 +4,7 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 import { DbService } from '../db/db.service';
+import { FieldValue } from '../orders/dto/create-order.dto';
 
 @Injectable()
 export class TicketService {
@@ -128,5 +129,28 @@ export class TicketService {
 			throw new UnauthorizedException(
 				`Ticket not allowed (${ticket.status})`,
 			);
+	}
+
+	holder(ticketId: string, holder: { name?: string; email?: string }) {
+		return this.db.ticket.update({
+			where: {
+				id: ticketId,
+			},
+			data: {
+				holderName: holder.name,
+				holderEmail: holder.email,
+			},
+		});
+	}
+
+	field(ticketId: string, field: FieldValue[]) {
+		return this.db.ticket.update({
+			where: {
+				id: ticketId,
+			},
+			data: {
+				customFieldValues: field,
+			},
+		});
 	}
 }

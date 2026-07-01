@@ -14,7 +14,7 @@ export class CreateOrderItem {
 	customFields?: FieldValue[][];
 }
 
-type FieldValue = {
+export type FieldValue = {
 	label: string;
 	value: string;
 };
