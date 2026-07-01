@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { EventStatus, Prisma } from '@prisma/client';
@@ -29,35 +30,35 @@ export class EventsController {
   }
 
   @Get(':id/stat')
-  stat(@Param('id') id: string) {
+  stat(@Param('id', ParseUUIDPipe) id: string) {
     return this.eventsService.stat(id);
   }
 
   @Patch(':id/publish')
-  pub(@Param('id') id: string) {
+  pub(@Param('id', ParseUUIDPipe) id: string) {
     return this.eventsService.pub(id);
   }
 
   @Patch(':id/cancel')
-  cancel(@Param('id') id: string) {
+  cancel(@Param('id', ParseUUIDPipe) id: string) {
     return this.eventsService.cancel(id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.eventsService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateEventDto: Prisma.EventUpdateInput,
   ) {
     return this.eventsService.update(id, updateEventDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.eventsService.remove(id);
   }
 }
