@@ -17,7 +17,7 @@ export class TicketController {
 		return this.ticketService.findOne(id);
 	}
 
-	@Get(':code/validade')
+	@Get(':code/validate')
 	validate(@Param('code') code: string, @Query('gate') gate?: string) {
 		return this.ticketService.validate(code, gate);
 	}
