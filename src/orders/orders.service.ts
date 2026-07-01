@@ -113,6 +113,7 @@ export class OrdersService {
 					return {
 						orderId: order.id,
 						ticketTypeId: item.ticketTypeId,
+						eventId: order.eventId,
 						code: randomBytes(32).toString('hex').toUpperCase(),
 						status: TicketStatus.ISSUED,
 						holderName: order.buyerName,

@@ -58,6 +58,8 @@ model Event {
 
   ticketTypes         TicketType[]
   orders              Order[]
+  ticket              Ticket[]
+  checkIns            CheckIn[]
 }
 
 model TicketType {
@@ -123,6 +125,9 @@ model Ticket {
   orderId           String
   order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   ticketTypeId      String
   ticketType        TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
 
@@ -146,6 +151,9 @@ model CheckIn {
 
   ticketId  String
   ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   scannedAt DateTime @default(now())
 
