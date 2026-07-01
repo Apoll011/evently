@@ -16,10 +16,10 @@ export class OrdersService {
 	async create(createOrderDto: CreateOrderDto) {
 		if (createOrderDto.paymentMethod == 'CASH') {
 			const order = await this.createOrder(createOrderDto, null);
-			await this.createCash(order.id, createOrderDto.items);
+			return this.createCash(order.id, createOrderDto.items);
 		} else if (createOrderDto.paymentMethod == 'STRIPE') {
 			const sessionId = this.createStripe(createOrderDto);
-			await this.createOrder(createOrderDto, sessionId);
+			return this.createOrder(createOrderDto, sessionId);
 		}
 	}
 
@@ -49,9 +49,12 @@ export class OrdersService {
 				paymentMethod: createOrderDto.paymentMethod,
 				paymentStatus: PaymentStatus.PENDING,
 				stripeSessionId: stripeID,
-				totalAmount: ticketTypes
-					.map((item) => item.price)
-					.reduce((acc, actual) => acc + actual, 0),
+				totalAmount: createOrderDto.items.reduce((acc, item) => {
+					const type = ticketTypes.find(
+						(t) => t.id === item.ticketTypeId,
+					);
+					return acc + (type?.price ?? 0) * item.quantity;
+				}, 0),
 			},
 		});
 		await this.db.orderItem.createMany({
@@ -102,26 +105,20 @@ export class OrdersService {
 		);
 
 		return this.db.ticket.createMany({
-			data: orderItems.map(
-				(item, index): Prisma.TicketCreateManyInput => {
-					const matchedOrder = orderItemMap.get(item.ticketTypeId);
-
-					const customFieldValues = matchedOrder?.customFields?.[
-						index
-					] as Prisma.InputJsonValue | undefined;
-
-					return {
-						orderId: order.id,
-						ticketTypeId: item.ticketTypeId,
-						eventId: order.eventId,
-						code: randomBytes(32).toString('hex').toUpperCase(),
-						status: TicketStatus.ISSUED,
-						holderName: order.buyerName,
-						holderEmail: order.buyerEmail,
-						customFieldValues,
-					};
-				},
-			),
+			data: orderItems.flatMap((item) => {
+				const matchedOrder = orderItemMap.get(item.ticketTypeId);
+				return Array.from({ length: item.quantity }, (_, index) => ({
+					orderId: order.id,
+					ticketTypeId: item.ticketTypeId,
+					eventId: order.eventId,
+					code: randomBytes(32).toString('hex').toUpperCase(),
+					status: TicketStatus.ISSUED,
+					holderName: order.buyerName,
+					holderEmail: order.buyerEmail,
+					customFieldValues:
+						matchedOrder?.customFields?.[index] ?? undefined,
+				}));
+			}),
 		});
 	}
 

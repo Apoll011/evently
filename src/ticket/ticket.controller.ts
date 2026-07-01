@@ -12,14 +12,14 @@ import { TicketService } from './ticket.service';
 export class TicketController {
 	constructor(private readonly ticketService: TicketService) {}
 
-	@Get(':id')
-	findOne(@Param('id') id: string) {
-		return this.ticketService.findOne(id);
-	}
-
 	@Get(':code/validate')
 	validate(@Param('code') code: string, @Query('gate') gate?: string) {
 		return this.ticketService.validate(code, gate);
+	}
+
+	@Get(':id')
+	findOne(@Param('id') id: string) {
+		return this.ticketService.findOne(id);
 	}
 
 	@Get('event/:eventId')

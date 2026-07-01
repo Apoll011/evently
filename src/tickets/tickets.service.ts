@@ -74,7 +74,7 @@ export class TicketsService {
 			throw new NotFoundException(`Ticket with ID ${id} not found`);
 		}
 
-		if (force && ticket.sold >= 0) {
+		if (!force && ticket.sold > 0) {
 			throw new PreconditionFailedException(
 				`Ticket with ID ${id} already has sales, and this remove is not forced.`,
 			);
