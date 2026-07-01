@@ -79,6 +79,7 @@ model TicketType {
   updatedAt     DateTime @updatedAt
 
   tickets       Ticket[]
+  orders        OrderItem[]
 }
 
 model Order {
@@ -100,7 +101,20 @@ model Order {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  items           OrderItem[]
   tickets         Ticket[]
+}
+
+model OrderItem {
+  id             String     @id @default(uuid())
+  orderId        String
+  order          Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  ticketTypeId   String
+  ticketType     TicketType @relation(fields: [ticketTypeId], references: [id])
+
+  quantity       Int
+  unitPrice      Int
 }
 
 model Ticket {
