@@ -22,8 +22,7 @@ async function bootstrap() {
 		.setOpenAPIVersion('3.2.0')
 		.setTitle('Evently API')
 		.setDescription('Manage Events')
-		.setVersion('1.2.0')
-		.addServer('https://api.example.com', 'Production server')
+		.setVersion('2.1.0')
 		.addServer('http://localhost:3000', 'Local development server')
 		.addBearerAuth(
 			{
