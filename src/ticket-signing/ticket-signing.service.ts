@@ -21,7 +21,7 @@ export type TicketHash = {
 
 
 const HASH_BYTES = 16;
-const FORMAT_VERSION = 1;
+export const FORMAT_VERSION = 1;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UUID_MARKER = 0xff;
 

@@ -12,7 +12,7 @@ import {
 import { DbService } from '../db/db.service';
 import { Order, PaymentStatus, Prisma, TicketStatus } from '@prisma/client';
 import { randomBytes } from 'crypto';
-import { TicketSigningService } from '../ticket-signing/ticket-signing.service';
+import { FORMAT_VERSION, TicketSigningService } from '../ticket-signing/ticket-signing.service';
 
 @Injectable()
 export class OrdersService {
@@ -177,7 +177,7 @@ export class OrdersService {
 
 		const compressed = this.ticketSigningService.compress(hash);
 
-		return `http://localhost:3000/ticket/v?o=${compressed}&s=${signature}`;
+		return `ticket://v${FORMAT_VERSION}/${compressed}@${signature}`;
 	}
 
 	async createCash(orderId: string, orderItemsMaker: CreateOrderItem[]) {
