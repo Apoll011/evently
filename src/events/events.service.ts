@@ -65,7 +65,12 @@ export class EventsService {
 		return this.db.checkIn.findMany({ where: { eventId: id } });
 	}
 
-	update(id: string, updateEventDto: UpdateEventDto) {
+	async update(id: string, updateEventDto: UpdateEventDto) {
+		const existing = await this.db.event.findUnique({ where: { id } });
+		if (!existing) {
+			throw new NotFoundException(`Event with ID ${id} not found`);
+		}
+
 		const { startsAt, endsAt, ...rest } = updateEventDto;
 		return this.db.event.update({
 			where: { id },
@@ -77,18 +82,30 @@ export class EventsService {
 		});
 	}
 
-	remove(id: string) {
+	async remove(id: string) {
+		const existing = await this.db.event.findUnique({ where: { id } });
+		if (!existing) {
+			throw new NotFoundException(`Event with ID ${id} not found`);
+		}
 		return this.db.event.delete({ where: { id } });
 	}
 
-	pub(id: string) {
+	async pub(id: string) {
+		const existing = await this.db.event.findUnique({ where: { id } });
+		if (!existing) {
+			throw new NotFoundException(`Event with ID ${id} not found`);
+		}
 		return this.db.event.update({
 			where: { id },
 			data: { status: EventStatus.PUBLISHED },
 		});
 	}
 
-	cancel(id: string) {
+	async cancel(id: string) {
+		const existing = await this.db.event.findUnique({ where: { id } });
+		if (!existing) {
+			throw new NotFoundException(`Event with ID ${id} not found`);
+		}
 		return this.db.event.update({
 			where: { id },
 			data: { status: EventStatus.CANCELLED },

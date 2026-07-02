@@ -52,7 +52,10 @@ export class EventsController {
 
 	/** Public discovery — published events only. */
 	@Get('public')
-	findPublic(@Query('organizerId') organizerId?: string) {
+	findPublic(
+		@Query('organizerId', new ParseUUIDPipe({ optional: true }))
+		organizerId?: string,
+	) {
 		return this.eventsService.findPublished(organizerId);
 	}
 

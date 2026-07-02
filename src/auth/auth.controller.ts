@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	ParseUUIDPipe,
+	Post,
+	Query,
+	UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterOrganizerDto } from './dto/register-organizer.dto';
@@ -47,7 +55,7 @@ export class AuthController {
 	@UseGuards(JwtAuthGuard)
 	createScanner(
 		@CurrentOrganizer() organizer: AuthenticatedOrganizer,
-		@Query('eventId') eventId: string,
+		@Query('eventId', ParseUUIDPipe) eventId: string,
 	) {
 		return this.authService.createScanner(organizer.organizerId, eventId);
 	}

@@ -198,8 +198,8 @@ export class OrdersService {
 		throw new NotImplementedException('Stripe is not Implemented yet');
 	}
 
-	findOne(id: string) {
-		return this.db.order.findUnique({
+	async findOne(id: string) {
+		const order = await this.db.order.findUnique({
 			where: {
 				id: id,
 			},
@@ -207,5 +207,11 @@ export class OrdersService {
 				tickets: true,
 			},
 		});
+
+		if (!order) {
+			throw new NotFoundException(`Order with ID ${id} not found`);
+		}
+
+		return order;
 	}
 }

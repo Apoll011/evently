@@ -19,8 +19,12 @@ export class TicketsService {
 		private readonly ticketSigningService: TicketSigningService,
 	) {}
 
-	findOne(id: string) {
-		return this.db.ticket.findUnique({ where: { id } });
+	async findOne(id: string) {
+		const ticket = await this.db.ticket.findUnique({ where: { id } });
+		if (!ticket) {
+			throw new NotFoundException(`Ticket with ID ${id} not found`);
+		}
+		return ticket;
 	}
 
 	async checkIn(data: string, signature: string, gate?: string) {

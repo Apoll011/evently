@@ -92,6 +92,20 @@ export class AuthService {
 	}
 
 	async createScanner(organizerId: string, eventId: string) {
+		const event = await this.db.event.findUnique({
+			where: { id: eventId },
+		});
+
+		if (!event) {
+			throw new NotFoundException(`Event with ID ${eventId} not found`);
+		}
+
+		if (event.organizerId !== organizerId) {
+			throw new UnauthorizedException(
+				'You do not have permission to create a scanner for this event',
+			);
+		}
+
 		const token = randomBytes(32).toString('hex');
 		const tokenHash = createHash('sha256').update(token).digest('hex');
 		await this.db.scannerSession.create({
