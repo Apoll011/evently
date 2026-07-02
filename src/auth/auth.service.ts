@@ -103,7 +103,7 @@ export class AuthService {
 			},
 		});
 		return {
-			url: `ticket-scanner://pair/${token}`,
+			url: `ticket-scanner://${token}`,
 		};
 	}
 
