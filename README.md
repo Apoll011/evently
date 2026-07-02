@@ -38,7 +38,7 @@ Event and ticket management API. Create and manage events, define ticket types, 
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/your-username/evently.git
+git clone https://github.com/apoll011/evently.git
 cd evently
 ```
 
