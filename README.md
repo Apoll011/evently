@@ -7,7 +7,7 @@ Event and ticket management API. Create and manage events, define ticket types, 
 ## Stack
 
 | Layer     | Technology          |
-| --------- |---------------------|
+| --------- | ------------------- |
 | Runtime   | Node.js             |
 | Framework | NestJS (TypeScript) |
 | Database  | PostgreSQL          |
@@ -100,16 +100,15 @@ docker-compose.yml
 
 ---
 
-
 ## API Overview
 
-| Module        | Base Path                        | Description                                    | Auth                        |
-|---------------|-----------------------------------|-------------------------------------------------|-----------------------------|
-| Auth          | `/auth`                           | Register, login, current organizer               | `/me` requires a token      |
-| Events        | `/events`                         | CRUD, publish, cancel, stats, orders, check-ins  | Organizer-owned              |
-| Ticket Types  | `/events/:eventId/ticket-types`   | Tiers per event                                  | Reads public, writes owner   |
-| Orders        | `/orders`                         | Create orders, Stripe webhook                    | Public (buyer flow)          |
-| Tickets       | `/tickets`                        | Issuance lookup, check-in, cancel/refund          | Reads public, writes owner   |
+| Module       | Base Path                       | Description                                     | Auth                       |
+| ------------ | ------------------------------- | ----------------------------------------------- | -------------------------- |
+| Auth         | `/auth`                         | Register, login, current organizer              | `/me` requires a token     |
+| Events       | `/events`                       | CRUD, publish, cancel, stats, orders, check-ins | Organizer-owned            |
+| Ticket Types | `/events/:eventId/ticket-types` | Tiers per event                                 | Reads public, writes owner |
+| Orders       | `/orders`                       | Create orders, Stripe webhook                   | Public (buyer flow)        |
+| Tickets      | `/tickets`                      | Issuance lookup, check-in, cancel/refund        | Reads public, writes owner |
 
 Every event belongs to exactly one **Organizer**. Organizers register/login via `/auth` and get back a JWT; pass it as `Authorization: Bearer <token>` to manage their own events, ticket types, and check-ins. Buyers never authenticate — placing an order and fetching a receipt/ticket by its (unguessable) ID stays public.
 
@@ -118,12 +117,13 @@ Every event belongs to exactly one **Organizer**. Organizers register/login via 
 ## Payment Flow
 
 **Online (Stripe)**
+
 1. Client creates an order → server returns a Stripe Checkout URL
 2. Buyer completes payment on Stripe
 3. Stripe fires a webhook → server confirms payment → tickets issued
    **In-person (Cash)**
-1. Seller creates an order with `paymentMethod: CASH`
-2. Server marks it paid immediately → tickets issued on the spot
+4. Seller creates an order with `paymentMethod: CASH`
+5. Server marks it paid immediately → tickets issued on the spot
    Both flows produce the same result: one `Ticket` record per unit, each with a unique code the client uses to render a QR.
 
 ---

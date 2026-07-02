@@ -40,7 +40,9 @@ export class TicketTypesService {
 	}
 
 	async update(eventId: string, id: string, dto: UpdateTicketTypeDto) {
-		const existing = await this.db.ticketType.findFirst({ where: { id, eventId } });
+		const existing = await this.db.ticketType.findFirst({
+			where: { id, eventId },
+		});
 		if (!existing) {
 			throw new NotFoundException(`Ticket type with ID ${id} not found`);
 		}

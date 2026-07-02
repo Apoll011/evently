@@ -64,7 +64,8 @@ export class TicketTypesController {
 	remove(
 		@Param('eventId', ParseUUIDPipe) eventId: string,
 		@Param('id', ParseUUIDPipe) id: string,
-		@Query('force', new DefaultValuePipe(false), ParseBoolPipe) force: boolean,
+		@Query('force', new DefaultValuePipe(false), ParseBoolPipe)
+		force: boolean,
 	) {
 		return this.ticketTypesService.remove(eventId, id, force);
 	}

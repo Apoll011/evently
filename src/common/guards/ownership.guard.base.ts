@@ -22,7 +22,9 @@ export abstract class OwnershipGuardBase implements CanActivate {
 	protected abstract resourceName: string;
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+		const request = context
+			.switchToHttp()
+			.getRequest<AuthenticatedRequest>();
 
 		if (!request.user) {
 			// JwtAuthGuard should have already rejected this — fail closed just in case.

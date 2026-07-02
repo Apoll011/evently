@@ -38,7 +38,8 @@ export class CreateOrderItem {
 	@ApiPropertyOptional({
 		type: [FieldValue],
 		isArray: true,
-		description: 'One array of custom field answers per ticket in this line item.',
+		description:
+			'One array of custom field answers per ticket in this line item.',
 	})
 	@IsOptional()
 	@IsArray()

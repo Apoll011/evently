@@ -6,7 +6,10 @@ import { AuthenticatedOrganizer, AuthenticatedRequest } from './auth.types';
  * calling organizer, e.g. `create(@CurrentOrganizer() organizer: AuthenticatedOrganizer)`.
  */
 export const CurrentOrganizer = createParamDecorator(
-	(_data: unknown, ctx: ExecutionContext): AuthenticatedOrganizer | undefined => {
+	(
+		_data: unknown,
+		ctx: ExecutionContext,
+	): AuthenticatedOrganizer | undefined => {
 		const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
 		return request.user;
 	},

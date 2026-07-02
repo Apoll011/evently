@@ -37,7 +37,10 @@ export class CreateTicketTypeDto {
 	@IsString()
 	description?: string;
 
-	@ApiProperty({ example: 2500, description: 'Price in the smallest currency unit (e.g. cents)' })
+	@ApiProperty({
+		example: 2500,
+		description: 'Price in the smallest currency unit (e.g. cents)',
+	})
 	@IsInt()
 	@Min(0)
 	price: number;

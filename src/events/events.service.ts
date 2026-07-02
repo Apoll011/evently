@@ -37,7 +37,8 @@ export class EventsService {
 
 	async findOne(id: string, requesterOrganizerId?: string) {
 		const event = await this.db.event.findUnique({ where: { id } });
-		if (!event) throw new NotFoundException(`Event with ID ${id} not found`);
+		if (!event)
+			throw new NotFoundException(`Event with ID ${id} not found`);
 
 		const isOwner = requesterOrganizerId === event.organizerId;
 		if (event.status !== EventStatus.PUBLISHED && !isOwner) {

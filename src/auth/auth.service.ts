@@ -29,7 +29,10 @@ export class AuthService {
 			);
 		}
 
-		const passwordHash = await bcrypt.hash(dto.password, BCRYPT_SALT_ROUNDS);
+		const passwordHash = await bcrypt.hash(
+			dto.password,
+			BCRYPT_SALT_ROUNDS,
+		);
 
 		const organizer = await this.db.organizer.create({
 			data: {
@@ -39,7 +42,11 @@ export class AuthService {
 			},
 		});
 
-		return this.buildAuthResponse(organizer.id, organizer.email, organizer.name);
+		return this.buildAuthResponse(
+			organizer.id,
+			organizer.email,
+			organizer.name,
+		);
 	}
 
 	async login(dto: LoginDto) {
@@ -61,7 +68,11 @@ export class AuthService {
 			throw new UnauthorizedException('Invalid email or password');
 		}
 
-		return this.buildAuthResponse(organizer.id, organizer.email, organizer.name);
+		return this.buildAuthResponse(
+			organizer.id,
+			organizer.email,
+			organizer.name,
+		);
 	}
 
 	me(organizerId: string) {
@@ -71,7 +82,11 @@ export class AuthService {
 		});
 	}
 
-	private buildAuthResponse(organizerId: string, email: string, name: string) {
+	private buildAuthResponse(
+		organizerId: string,
+		email: string,
+		name: string,
+	) {
 		const payload: JwtPayload = { sub: organizerId, email };
 		return {
 			accessToken: this.jwtService.sign(payload),

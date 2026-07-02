@@ -79,7 +79,10 @@ export class TicketsController {
 	@Patch(':id/fields')
 	@ApiBearerAuth('BearerAuth')
 	@UseGuards(JwtAuthGuard, TicketOwnershipGuard)
-	fields(@Param('id', ParseUUIDPipe) id: string, @Body() fields: FieldValue[]) {
+	fields(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Body() fields: FieldValue[],
+	) {
 		return this.ticketsService.field(id, fields);
 	}
 }

@@ -44,7 +44,10 @@ export class EventsController {
 		@CurrentOrganizer() organizer: AuthenticatedOrganizer,
 		@Query('status') status?: EventStatus,
 	) {
-		return this.eventsService.findAllForOrganizer(organizer.organizerId, status);
+		return this.eventsService.findAllForOrganizer(
+			organizer.organizerId,
+			status,
+		);
 	}
 
 	/** Public discovery — published events only. */
