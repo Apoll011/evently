@@ -65,24 +65,4 @@ export class TicketsController {
 	refund(@Param('id', ParseUUIDPipe) id: string) {
 		return this.ticketsService.refund(id);
 	}
-
-	@Patch(':id/holder')
-	@ApiBearerAuth('BearerAuth')
-	@UseGuards(JwtAuthGuard, TicketOwnershipGuard)
-	holder(
-		@Param('id', ParseUUIDPipe) id: string,
-		@Body() holder: { name?: string; email?: string },
-	) {
-		return this.ticketsService.holder(id, holder);
-	}
-
-	@Patch(':id/fields')
-	@ApiBearerAuth('BearerAuth')
-	@UseGuards(JwtAuthGuard, TicketOwnershipGuard)
-	fields(
-		@Param('id', ParseUUIDPipe) id: string,
-		@Body() fields: FieldValue[],
-	) {
-		return this.ticketsService.field(id, fields);
-	}
 }

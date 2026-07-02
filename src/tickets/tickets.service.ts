@@ -136,20 +136,6 @@ export class TicketsService {
 		return this.db.ticket.findUnique({ where: { id } });
 	}
 
-	holder(ticketId: string, holder: { name?: string; email?: string }) {
-		return this.db.ticket.update({
-			where: { id: ticketId },
-			data: { holderName: holder.name, holderEmail: holder.email },
-		});
-	}
-
-	field(ticketId: string, fields: FieldValue[]) {
-		return this.db.ticket.update({
-			where: { id: ticketId },
-			data: { customFieldValues: fields as any },
-		});
-	}
-
 	async url(id: string) {
 		const ticket = await this.db.ticket.findUnique({ where: { id } });
 		if (!ticket) throw new NotFoundException('Ticket Not Found');
