@@ -6,6 +6,7 @@ import {
 	ParseUUIDPipe,
 	Query,
 	Body,
+	Post,
 } from '@nestjs/common';
 import { TicketService } from './ticket.service';
 import { FieldValue } from '../orders/dto/create-order.dto';
@@ -14,9 +15,10 @@ import { FieldValue } from '../orders/dto/create-order.dto';
 export class TicketController {
 	constructor(private readonly ticketService: TicketService) {}
 
-	@Get(':code/validate')
-	validate(@Param('code') code: string, @Query('gate') gate?: string) {
-		return this.ticketService.validate(code, gate);
+	//TODO: Add a auth to this
+	@Post('c')
+	validate(@Query('o') data: string, @Query('s') signature: string, @Query('gate') gate?: string) {
+		return this.ticketService.validate(data, signature, gate);
 	}
 
 	@Get('v')

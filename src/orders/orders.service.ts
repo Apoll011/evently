@@ -4,7 +4,11 @@ import {
 	BadRequestException,
 	NotImplementedException,
 } from '@nestjs/common';
-import { CreateOrderDto, CreateOrderItem } from './dto/create-order.dto';
+import {
+	CreateOrderDto,
+	CreateOrderItem,
+	FieldValue,
+} from './dto/create-order.dto';
 import { DbService } from '../db/db.service';
 import { Order, PaymentStatus, Prisma, TicketStatus } from '@prisma/client';
 import { randomBytes } from 'crypto';
@@ -151,6 +155,29 @@ export class OrdersService {
 				}));
 			}),
 		});
+	}
+
+	async url(id: string) {
+		const ticket = await this.db.ticket.findUnique({
+			where: { id: id },
+		});
+		if (!ticket) throw new NotFoundException('Ticket Not Found');
+
+		const signticket = {
+			orderId: ticket.orderId,
+			eventId: ticket.eventId,
+			holderName: ticket.holderName,
+			holderEmail: ticket.holderEmail,
+			customFields: ticket.customFieldValues as FieldValue[],
+		};
+
+		const hash = this.ticketSigningService.hashTicket(signticket);
+
+		const signature = this.ticketSigningService.sign(signticket);
+
+		const compressed = this.ticketSigningService.compress(hash);
+
+		return `http://localhost:3000/ticket/v?o=${compressed}&s=${signature}`;
 	}
 
 	async createCash(orderId: string, orderItemsMaker: CreateOrderItem[]) {

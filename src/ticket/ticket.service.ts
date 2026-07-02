@@ -1,8 +1,10 @@
 import {
+	ConflictException,
 	Injectable,
 	NotFoundException,
 	UnauthorizedException,
 } from '@nestjs/common';
+import { TicketStatus } from '@prisma/client'; // adjust import path/name to match your generated client
 import { DbService } from '../db/db.service';
 import { FieldValue } from '../orders/dto/create-order.dto';
 import {
@@ -18,165 +20,112 @@ export class TicketService {
 	) {}
 
 	findOne(id: string) {
-		return this.db.ticket.findUnique({
-			where: {
-				id: id,
-			},
-		});
+		return this.db.ticket.findUnique({ where: { id } });
 	}
 
-	async validate(code: string, gate?: string) {
+	async validate(data: string, signature: string, gate?: string) {
 		const ticket = await this.db.ticket.findUnique({
-			where: {
-				code: code,
-			},
+			where: { code: signature },
+			include: { event: true, ticketType: true },
 		});
 
-		if (!ticket) throw new NotFoundException('This Ticket does not exist');
+		if (!ticket) throw new NotFoundException('This ticket does not exist');
 
-		if (ticket.status !== 'ISSUED')
-			throw new UnauthorizedException(
-				`Ticket not allowed: (${ticket.status})`,
-			);
+		if (ticket.status !== TicketStatus.ISSUED) {
+			throw new UnauthorizedException(`Ticket not allowed: (${ticket.status})`);
+		}
 
-		const valid = this.ticketSigningService.verify(
-			{
-				orderId: ticket.orderId,
-				eventId: ticket.eventId,
-				holderName: ticket.holderName,
-				holderEmail: ticket.holderEmail,
-				customFields: ticket.customFieldValues as FieldValue[],
-			},
-			code,
+		const valid = this.ticketSigningService.verifyHash(
+			this.ticketSigningService.decompress(data),
+			signature,
 		);
-		if (!valid) throw new UnauthorizedException('Invalid Signature');
+		if (!valid) throw new UnauthorizedException('Invalid signature');
 
-		const event = await this.db.event.findUnique({
-			where: {
-				id: ticket.eventId,
-			},
-		});
+		const event = ticket.event;
+		if (!event) throw new NotFoundException('Event not found');
+		if (event.status !== 'PUBLISHED') throw new UnauthorizedException('Event not active');
 
-		if (!event) throw new NotFoundException('Event not Found');
+		const now = Date.now();
+		const windowStart = new Date(event.startsAt).getTime() - 2 * 60 * 60 * 1000;
+		const windowEnd = new Date(event.endsAt).getTime();
+		if (now < windowStart || now > windowEnd) {
+			throw new UnauthorizedException("It's not time yet");
+		}
 
-		if (event.status !== 'PUBLISHED')
-			throw new UnauthorizedException('Event not Active');
+		const checkedInAt = new Date();
 
-		const date = new Date();
-		const start = new Date(event.startsAt);
-		start.setHours(start.getHours() - 2);
-		const end = new Date(event.endsAt);
+		await this.db.$transaction(async (tx) => {
+			const { count } = await tx.ticket.updateMany({
+				where: { id: ticket.id, status: TicketStatus.ISSUED },
+				data: { status: TicketStatus.USED, usedAt: checkedInAt },
+			});
 
-		if (!(date >= start && date <= end))
-			throw new UnauthorizedException('Its not the time yet');
+			if (count === 0) {
+				throw new ConflictException('Ticket was already checked in');
+			}
 
-		await this.db.ticket.update({
-			where: {
-				id: ticket.id,
-				code: code,
-			},
-			data: {
-				status: 'USED',
-				usedAt: new Date().toISOString(),
-			},
-		});
-
-		await this.db.checkIn.create({
-			data: {
-				ticketId: ticket.id,
-				eventId: ticket.eventId,
-				gate: gate,
-			},
-		});
-
-		const ticketType = await this.db.ticketType.findUnique({
-			where: { id: ticket.ticketTypeId },
+			await tx.checkIn.create({
+				data: { ticketId: ticket.id, eventId: ticket.eventId, gate },
+			});
 		});
 
 		return {
 			valid: true,
-			ticketType: ticketType?.name,
+			ticketType: ticket.ticketType?.name,
 			holderName: ticket.holderName,
 			event: event.name,
-			checkedInAt: new Date().toISOString(),
+			checkedInAt: checkedInAt.toISOString(),
 		};
 	}
 
 	validSignature(data: string, signature: string): { valid: boolean } {
-		const ticketHash = this.ticketSigningService.decompress(data);
-		return {
-			valid: this.ticketSigningService.verifyHash(ticketHash, signature),
-		};
+		try {
+			const ticketHash = this.ticketSigningService.decompress(data);
+			return { valid: this.ticketSigningService.verifyHash(ticketHash, signature) };
+		} catch {
+
+			return { valid: false };
+		}
 	}
 
 	findAll(eventId: string) {
-		return this.db.ticket.findMany({
-			where: {
-				eventId: eventId,
-			},
-		});
+		return this.db.ticket.findMany({ where: { eventId } });
 	}
 
 	async cancel(id: string) {
-		await this.ensureOnlyIssued(id);
-
-		return this.db.ticket.update({
-			where: {
-				id: id,
-			},
-			data: {
-				status: 'CANCELLED',
-			},
-		});
+		return this.transitionOnlyIfIssued(id, TicketStatus.CANCELLED);
 	}
 
 	async refund(id: string) {
-		await this.ensureOnlyIssued(id);
-
-		return this.db.ticket.update({
-			where: {
-				id: id,
-			},
-			data: {
-				status: 'REFUNDED',
-			},
-		});
+		return this.transitionOnlyIfIssued(id, TicketStatus.REFUNDED);
 	}
 
-	async ensureOnlyIssued(id: string) {
-		const ticket = await this.db.ticket.findUnique({
-			where: {
-				id: id,
-			},
+	private async transitionOnlyIfIssued(id: string, status: TicketStatus) {
+		const { count } = await this.db.ticket.updateMany({
+			where: { id, status: TicketStatus.ISSUED },
+			data: { status },
 		});
 
-		if (!ticket) throw new NotFoundException('This Ticket does not exist');
-		if (ticket.status != 'ISSUED')
-			throw new UnauthorizedException(
-				`Ticket not allowed (${ticket.status})`,
-			);
+		if (count === 0) {
+			const ticket = await this.db.ticket.findUnique({ where: { id } });
+			if (!ticket) throw new NotFoundException('This ticket does not exist');
+			throw new UnauthorizedException(`Ticket not allowed (${ticket.status})`);
+		}
+
+		return this.db.ticket.findUnique({ where: { id } });
 	}
 
 	holder(ticketId: string, holder: { name?: string; email?: string }) {
 		return this.db.ticket.update({
-			where: {
-				id: ticketId,
-			},
-			data: {
-				holderName: holder.name,
-				holderEmail: holder.email,
-			},
+			where: { id: ticketId },
+			data: { holderName: holder.name, holderEmail: holder.email },
 		});
 	}
 
-	field(ticketId: string, field: FieldValue[]) {
+	field(ticketId: string, fields: FieldValue[]) {
 		return this.db.ticket.update({
-			where: {
-				id: ticketId,
-			},
-			data: {
-				customFieldValues: field,
-			},
+			where: { id: ticketId },
+			data: { customFieldValues: fields },
 		});
 	}
 }
