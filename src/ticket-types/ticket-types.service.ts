@@ -57,7 +57,7 @@ export class TicketTypesService {
 	}
 
 	async remove(eventId: string, id: string, force: boolean) {
-		const ticketType = await this.db.ticketType.findUnique({
+		const ticketType = await this.db.ticketType.findFirst({
 			where: { id, eventId },
 		});
 
@@ -71,6 +71,6 @@ export class TicketTypesService {
 			);
 		}
 
-		return this.db.ticketType.delete({ where: { id, eventId } });
+		return this.db.ticketType.delete({ where: { id } });
 	}
 }
