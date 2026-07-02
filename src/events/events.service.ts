@@ -1,90 +1,101 @@
-import { Injectable } from '@nestjs/common';
-import { EventStatus, Prisma } from '@prisma/client';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventStatus } from '@prisma/client';
 import { DbService } from '../db/db.service';
+import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 
 @Injectable()
 export class EventsService {
 	constructor(private db: DbService) {}
 
-	async create(createEventDto: Prisma.EventCreateInput) {
+	create(organizerId: string, createEventDto: CreateEventDto) {
 		return this.db.event.create({
-			data: createEventDto,
+			data: {
+				...createEventDto,
+				startsAt: new Date(createEventDto.startsAt),
+				endsAt: new Date(createEventDto.endsAt),
+				organizerId,
+			},
 		});
 	}
 
-	findAll(organizerId?: string, status?: EventStatus) {
-		if (status || organizerId) {
-			return this.db.event.findMany({
-				where: {
-					status: status,
-					organizerId: organizerId,
-				},
-			});
+	/** The authenticated organizer's own events (any status). */
+	findAllForOrganizer(organizerId: string, status?: EventStatus) {
+		return this.db.event.findMany({
+			where: { organizerId, status },
+			orderBy: { startsAt: 'asc' },
+		});
+	}
+
+	/** Public listing — published events only, optionally scoped to one organizer's public page. */
+	findPublished(organizerId?: string) {
+		return this.db.event.findMany({
+			where: { organizerId, status: EventStatus.PUBLISHED },
+			orderBy: { startsAt: 'asc' },
+		});
+	}
+
+	async findOne(id: string, requesterOrganizerId?: string) {
+		const event = await this.db.event.findUnique({ where: { id } });
+		if (!event) throw new NotFoundException(`Event with ID ${id} not found`);
+
+		const isOwner = requesterOrganizerId === event.organizerId;
+		if (event.status !== EventStatus.PUBLISHED && !isOwner) {
+			// Don't reveal that an unpublished/foreign event exists.
+			throw new NotFoundException(`Event with ID ${id} not found`);
 		}
-		return this.db.event.findMany();
+
+		return event;
 	}
 
 	findAllTickets(id: string) {
 		return this.db.ticket.findMany({ where: { eventId: id } });
 	}
 
-	findOne(id: string) {
-		return this.db.event.findUnique({
-			where: {
-				id: id,
-			},
+	findAllOrders(id: string) {
+		return this.db.order.findMany({
+			where: { eventId: id },
+			include: { items: true },
+			orderBy: { createdAt: 'desc' },
 		});
 	}
 
-	checkin(id: string) {
-		return this.db.checkIn.findMany({
-			where: {
-				eventId: id,
-			},
-		});
+	checkins(id: string) {
+		return this.db.checkIn.findMany({ where: { eventId: id } });
 	}
 
-	update(id: string, updateEventDto: Prisma.EventUpdateInput) {
+	update(id: string, updateEventDto: UpdateEventDto) {
+		const { startsAt, endsAt, ...rest } = updateEventDto;
 		return this.db.event.update({
-			where: {
-				id: id,
+			where: { id },
+			data: {
+				...rest,
+				...(startsAt ? { startsAt: new Date(startsAt) } : {}),
+				...(endsAt ? { endsAt: new Date(endsAt) } : {}),
 			},
-			data: updateEventDto,
 		});
 	}
 
 	remove(id: string) {
-		return this.db.event.delete({
-			where: {
-				id: id,
-			},
-		});
+		return this.db.event.delete({ where: { id } });
 	}
 
 	pub(id: string) {
 		return this.db.event.update({
-			where: {
-				id: id,
-			},
-			data: {
-				status: EventStatus.PUBLISHED,
-			},
+			where: { id },
+			data: { status: EventStatus.PUBLISHED },
 		});
 	}
 
 	cancel(id: string) {
 		return this.db.event.update({
-			where: {
-				id: id,
-			},
-			data: {
-				status: EventStatus.CANCELLED,
-			},
+			where: { id },
+			data: { status: EventStatus.CANCELLED },
 		});
 	}
 
-	async stat(id: string) {
-		const [tickets, checkins, orderItems] = await Promise.all([
+	async stats(id: string) {
+		const [ticketsSold, checkinsCount, orderItems] = await Promise.all([
 			this.db.ticket.count({ where: { eventId: id } }),
 			this.db.checkIn.count({ where: { eventId: id } }),
 			this.db.orderItem.findMany({
@@ -93,10 +104,16 @@ export class EventsService {
 			}),
 		]);
 
+		const revenue = orderItems.reduce(
+			(acc, item) => acc + item.unitPrice * item.quantity,
+			0,
+		);
+
 		return {
-			tickets_sold: tickets,
-			checkins: checkins,
-			orders: orderItems,
+			ticketsSold,
+			checkins: checkinsCount,
+			revenue,
+			orderItems,
 		};
 	}
 }

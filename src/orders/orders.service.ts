@@ -21,12 +21,19 @@ export class OrdersService {
 	) {}
 
 	async create(createOrderDto: CreateOrderDto) {
-		if (createOrderDto.paymentMethod == 'CASH') {
-			const order = await this.createOrder(createOrderDto, null);
-			return this.createCash(order.id, createOrderDto.items);
-		} else if (createOrderDto.paymentMethod == 'STRIPE') {
-			const sessionId = this.createStripe(createOrderDto);
-			return this.createOrder(createOrderDto, sessionId);
+		switch (createOrderDto.paymentMethod) {
+			case 'CASH': {
+				const order = await this.createOrder(createOrderDto, null);
+				return this.createCash(order.id, createOrderDto.items);
+			}
+			case 'STRIPE': {
+				const sessionId = this.createStripe(createOrderDto);
+				return this.createOrder(createOrderDto, sessionId);
+			}
+			default:
+				throw new BadRequestException(
+					`Unsupported payment method: ${createOrderDto.paymentMethod}`,
+				);
 		}
 	}
 
@@ -48,16 +55,17 @@ export class OrdersService {
 			},
 		});
 
-		ticketTypes.forEach((ticket) => {
-			if (
-				ticket.quantity -
-					(ticket.sold +
-						(createOrderDto.items.find(
-							(i) => i.ticketTypeId == ticket.eventId,
-						)?.quantity ?? 0)) <=
-				0
-			)
-				throw new BadRequestException('Not enough Tickets left');
+		ticketTypes.forEach((ticketType) => {
+			const requestedQuantity =
+				createOrderDto.items.find((i) => i.ticketTypeId === ticketType.id)
+					?.quantity ?? 0;
+			const remaining = ticketType.quantity - ticketType.sold;
+
+			if (requestedQuantity > remaining) {
+				throw new BadRequestException(
+					`Not enough tickets left for "${ticketType.name}" (${remaining} remaining, ${requestedQuantity} requested)`,
+				);
+			}
 		});
 
 		const order = await this.db.order.create({
@@ -157,7 +165,7 @@ export class OrdersService {
 						holderName: order.buyerName,
 						holderEmail: order.buyerEmail,
 						customFieldValues:
-						matchedOrder?.customFields?.[index] ?? undefined,
+						(matchedOrder?.customFields?.[index] as any) ?? undefined,
 					}
 				});
 			}),

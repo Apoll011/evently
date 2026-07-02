@@ -1,90 +1,143 @@
 import {
+	ConflictException,
 	Injectable,
 	NotFoundException,
-	PreconditionFailedException,
+	UnauthorizedException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { TicketStatus } from '@prisma/client';
 import { DbService } from '../db/db.service';
-import { CreateTicketDto } from './dto/create-ticket.dto';
+import { FieldValue } from '../orders/dto/create-order.dto';
+import {
+	FORMAT_VERSION,
+	TicketSigningService,
+} from '../ticket-signing/ticket-signing.service';
 
 @Injectable()
 export class TicketsService {
-	constructor(private db: DbService) {}
+	constructor(
+		private db: DbService,
+		private readonly ticketSigningService: TicketSigningService,
+	) {}
 
-	async create(eventId: string, createTicketDto: CreateTicketDto) {
-		const eventExists = await this.db.event.findUnique({
-			where: { id: eventId },
+	findOne(id: string) {
+		return this.db.ticket.findUnique({ where: { id } });
+	}
+
+	async checkIn(data: string, signature: string, gate?: string) {
+		let hashedTicket: ReturnType<TicketSigningService['decompress']>;
+		try {
+			hashedTicket = this.ticketSigningService.decompress(data);
+		} catch {
+			throw new UnauthorizedException('Malformed ticket payload');
+		}
+		const ticket = await this.db.ticket.findUnique({
+			where: { code: signature },
+			include: { event: true, ticketType: true },
 		});
 
-		if (!eventExists) {
-			throw new NotFoundException(`Event with ID ${eventId} not found`);
+		if (!ticket) throw new NotFoundException('This ticket does not exist');
+
+		if (ticket.status !== TicketStatus.ISSUED) {
+			throw new UnauthorizedException(`Ticket not allowed: (${ticket.status})`);
 		}
 
-		return this.db.ticketType.create({
-			data: {
-				eventId: eventId,
-				...createTicketDto,
-				customFields: createTicketDto.customFields
-					? JSON.parse(JSON.stringify(createTicketDto.customFields))
-					: undefined,
-			},
-		});
-	}
-
-	findAll(eventId: string) {
-		return this.db.ticketType.findMany({
-			where: {
-				eventId: eventId,
-			},
-		});
-	}
-
-	findOne(eventId: string, id: string) {
-		return this.db.ticketType.findUnique({
-			where: {
-				id: id,
-				eventId: eventId,
-			},
-		});
-	}
-
-	update(
-		eventId: string,
-		id: string,
-		updateTicketDto: Prisma.TicketTypeUpdateInput,
-	) {
-		return this.db.ticketType.update({
-			where: {
-				id: id,
-				eventId: eventId,
-			},
-			data: updateTicketDto,
-		});
-	}
-
-	async remove(eventId: string, id: string, force: boolean) {
-		const ticket = await this.db.ticketType.findUnique({
-			where: {
-				id: id,
-				eventId: eventId,
-			},
-		});
-
-		if (!ticket) {
-			throw new NotFoundException(`Ticket with ID ${id} not found`);
+		if (
+			ticket.orderId !== hashedTicket.orderId ||
+			ticket.eventId !== hashedTicket.eventId
+		) {
+			throw new UnauthorizedException('Ticket is not valid');
 		}
 
-		if (!force && ticket.sold > 0) {
-			throw new PreconditionFailedException(
-				`Ticket with ID ${id} already has sales, and this remove is not forced.`,
-			);
+		const valid = this.ticketSigningService.verifyHash(hashedTicket, signature);
+		if (!valid) throw new UnauthorizedException('Invalid signature');
+
+		const event = ticket.event;
+		if (!event) throw new NotFoundException('Event not found');
+		if (event.status !== 'PUBLISHED') {
+			throw new UnauthorizedException('Event not active');
 		}
 
-		return this.db.ticketType.delete({
-			where: {
-				id: id,
-				eventId: eventId,
-			},
+		const now = Date.now();
+		const windowStart = new Date(event.startsAt).getTime() - 2 * 60 * 60 * 1000;
+		const windowEnd = new Date(event.endsAt).getTime();
+		if (now < windowStart || now > windowEnd) {
+			throw new UnauthorizedException("It's not time yet");
+		}
+
+		const checkedInAt = new Date();
+
+		await this.db.$transaction(async (tx) => {
+			const { count } = await tx.ticket.updateMany({
+				where: { id: ticket.id, status: TicketStatus.ISSUED },
+				data: { status: TicketStatus.USED, usedAt: checkedInAt },
+			});
+
+			if (count === 0) {
+				throw new ConflictException('Ticket was already checked in');
+			}
+
+			await tx.checkIn.create({
+				data: { ticketId: ticket.id, eventId: ticket.eventId, gate },
+			});
 		});
+
+		return {
+			valid: true,
+			ticketType: ticket.ticketType?.name,
+			holderName: ticket.holderName,
+			event: event.name,
+			checkedInAt: checkedInAt.toISOString(),
+		};
+	}
+
+	verifySignature(data: string, signature: string): { valid: boolean } {
+		try {
+			const ticketHash = this.ticketSigningService.decompress(data);
+			return {
+				valid: this.ticketSigningService.verifyHash(ticketHash, signature),
+			};
+		} catch {
+			return { valid: false };
+		}
+	}
+
+	async cancel(id: string) {
+		return this.transitionOnlyIfIssued(id, TicketStatus.CANCELLED);
+	}
+
+	async refund(id: string) {
+		return this.transitionOnlyIfIssued(id, TicketStatus.REFUNDED);
+	}
+
+	private async transitionOnlyIfIssued(id: string, status: TicketStatus) {
+		const { count } = await this.db.ticket.updateMany({
+			where: { id, status: TicketStatus.ISSUED },
+			data: { status },
+		});
+
+			throw new ConflictException(`Ticket not allowed (${ticket.status})`);
+
+		return this.db.ticket.findUnique({ where: { id } });
+	}
+
+	holder(ticketId: string, holder: { name?: string; email?: string }) {
+		return this.db.ticket.update({
+			where: { id: ticketId },
+			data: { holderName: holder.name, holderEmail: holder.email },
+		});
+	}
+
+	field(ticketId: string, fields: FieldValue[]) {
+		return this.db.ticket.update({
+			where: { id: ticketId },
+ 		data: { customFieldValues: fields as any },
+		});
+	}
+
+	async url(id: string) {
+		const ticket = await this.db.ticket.findUnique({ where: { id } });
+		if (!ticket) throw new NotFoundException('Ticket Not Found');
+
+		return `ticket://v${FORMAT_VERSION}/${ticket.payload}@${ticket.code}`;
 	}
 }
