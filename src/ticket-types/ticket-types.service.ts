@@ -36,7 +36,7 @@ export class TicketTypesService {
 	}
 
 	findOne(eventId: string, id: string) {
-		return this.db.ticketType.findUnique({ where: { id, eventId } });
+		return this.db.ticketType.findFirst({ where: { id, eventId } });
 	}
 
 	update(eventId: string, id: string, dto: UpdateTicketTypeDto) {
