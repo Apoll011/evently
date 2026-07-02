@@ -38,7 +38,9 @@ export class TicketsService {
 		if (!ticket) throw new NotFoundException('This ticket does not exist');
 
 		if (ticket.status !== TicketStatus.ISSUED) {
-			throw new UnauthorizedException(`Ticket not allowed: (${ticket.status})`);
+			throw new UnauthorizedException(
+				`Ticket not allowed: (${ticket.status})`,
+			);
 		}
 
 		if (
@@ -48,7 +50,10 @@ export class TicketsService {
 			throw new UnauthorizedException('Ticket is not valid');
 		}
 
-		const valid = this.ticketSigningService.verifyHash(hashedTicket, signature);
+		const valid = this.ticketSigningService.verifyHash(
+			hashedTicket,
+			signature,
+		);
 		if (!valid) throw new UnauthorizedException('Invalid signature');
 
 		const event = ticket.event;
@@ -58,7 +63,8 @@ export class TicketsService {
 		}
 
 		const now = Date.now();
-		const windowStart = new Date(event.startsAt).getTime() - 2 * 60 * 60 * 1000;
+		const windowStart =
+			new Date(event.startsAt).getTime() - 2 * 60 * 60 * 1000;
 		const windowEnd = new Date(event.endsAt).getTime();
 		if (now < windowStart || now > windowEnd) {
 			throw new UnauthorizedException("It's not time yet");
@@ -94,7 +100,10 @@ export class TicketsService {
 		try {
 			const ticketHash = this.ticketSigningService.decompress(data);
 			return {
-				valid: this.ticketSigningService.verifyHash(ticketHash, signature),
+				valid: this.ticketSigningService.verifyHash(
+					ticketHash,
+					signature,
+				),
 			};
 		} catch {
 			return { valid: false };
@@ -115,7 +124,14 @@ export class TicketsService {
 			data: { status },
 		});
 
-			throw new ConflictException(`Ticket not allowed (${ticket.status})`);
+		if (count === 0) {
+			const ticket = await this.db.ticket.findUnique({ where: { id } });
+			if (!ticket)
+				throw new NotFoundException('This ticket does not exist');
+			throw new ConflictException(
+				`Ticket not allowed (${ticket.status})`,
+			);
+		}
 
 		return this.db.ticket.findUnique({ where: { id } });
 	}
@@ -130,7 +146,7 @@ export class TicketsService {
 	field(ticketId: string, fields: FieldValue[]) {
 		return this.db.ticket.update({
 			where: { id: ticketId },
- 		data: { customFieldValues: fields as any },
+			data: { customFieldValues: fields as any },
 		});
 	}
 
