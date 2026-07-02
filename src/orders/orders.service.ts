@@ -24,7 +24,7 @@ export class OrdersService {
 		switch (createOrderDto.paymentMethod) {
 			case 'CASH': {
 				const order = await this.createOrder(createOrderDto, null);
-				return this.createCash(order.id, createOrderDto.items);
+				return await this.createCash(order.id, createOrderDto.items);
 			}
 			case 'STRIPE': {
 				const sessionId = this.createStripe(createOrderDto);
@@ -57,8 +57,9 @@ export class OrdersService {
 
 		ticketTypes.forEach((ticketType) => {
 			const requestedQuantity =
-				createOrderDto.items.find((i) => i.ticketTypeId === ticketType.id)
-					?.quantity ?? 0;
+				createOrderDto.items.find(
+					(i) => i.ticketTypeId === ticketType.id,
+				)?.quantity ?? 0;
 			const remaining = ticketType.quantity - ticketType.sold;
 
 			if (requestedQuantity > remaining) {
@@ -153,7 +154,7 @@ export class OrdersService {
 						holderEmail: order.buyerEmail,
 						customFields: matchedOrder?.customFields?.[index] ?? [],
 					});
-					
+
 					return {
 						orderId: order.id,
 						ticketTypeId: item.ticketTypeId,
@@ -165,15 +166,16 @@ export class OrdersService {
 						holderName: order.buyerName,
 						holderEmail: order.buyerEmail,
 						customFieldValues:
-						(matchedOrder?.customFields?.[index] as any) ?? undefined,
-					}
+							(matchedOrder?.customFields?.[index] as any) ??
+							undefined,
+					};
 				});
 			}),
 		});
 	}
 
 	async createCash(orderId: string, orderItemsMaker: CreateOrderItem[]) {
-		await this.db.order.update({
+		const order = await this.db.order.update({
 			where: {
 				id: orderId,
 			},
@@ -182,7 +184,8 @@ export class OrdersService {
 			},
 		});
 
-		return await this.createTicket(orderId, orderItemsMaker);
+		await this.createTicket(orderId, orderItemsMaker);
+		return order;
 	}
 
 	createStripe(createOrderDto: CreateOrderDto): string {
@@ -200,13 +203,8 @@ export class OrdersService {
 			where: {
 				id: id,
 			},
-		});
-	}
-
-	findTickets(id: string) {
-		return this.db.ticket.findMany({
-			where: {
-				orderId: id,
+			include: {
+				tickets: true,
 			},
 		});
 	}
