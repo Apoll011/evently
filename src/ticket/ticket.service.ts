@@ -24,8 +24,10 @@ export class TicketService {
 	}
 
 	async validate(data: string, signature: string, gate?: string) {
+		const hashedTicket = this.ticketSigningService.decompress(data);
+
 		const ticket = await this.db.ticket.findUnique({
-			where: { code: signature },
+			where: { code: signature, orderId: hashedTicket.orderId, eventId: hashedTicket.eventId },
 			include: { event: true, ticketType: true },
 		});
 
@@ -36,7 +38,7 @@ export class TicketService {
 		}
 
 		const valid = this.ticketSigningService.verifyHash(
-			this.ticketSigningService.decompress(data),
+			hashedTicket,
 			signature,
 		);
 		if (!valid) throw new UnauthorizedException('Invalid signature');
