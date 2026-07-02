@@ -14,9 +14,9 @@ export type SignTicket = {
 export type TicketHash = {
 	orderId: string;
 	eventId: string;
-	holderNameHash: string; // hex, HASH_BYTES long
-	holderEmailHash: string; // hex, HASH_BYTES long
-	customFieldsHash: string; // hex, HASH_BYTES long
+	holderNameHash: string;
+	holderEmailHash: string;
+	customFieldsHash: string;
 };
 
 
@@ -149,9 +149,6 @@ export class TicketSigningService implements OnModuleInit {
 		return { orderId: order.id, eventId: event.id, holderNameHash, holderEmailHash, customFieldsHash };
 	}
 
-	// UUIDs pack to 16 raw bytes instead of 36 text chars. Anything else
-	// (in case an id isn't a UUID) falls back to a length-prefixed UTF-8
-	// string so this never silently mangles data.
 	private idToBuffer(id: string): Buffer {
 		if (UUID_RE.test(id)) {
 			return Buffer.concat([Buffer.from([UUID_MARKER]), Buffer.from(id.replace(/-/g, ''), 'hex')]);
