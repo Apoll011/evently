@@ -16,7 +16,8 @@ export class TicketController {
 	constructor(private readonly ticketService: TicketService) {}
 
 	//TODO: Add a auth to this
-	@Post('c')
+	//Reader will reade a qrcode with ticket://version/ticketData@signature
+	@Post('checkIn')
 	validate(@Query('o') data: string, @Query('s') signature: string, @Query('gate') gate?: string) {
 		return this.ticketService.validate(data, signature, gate);
 	}
