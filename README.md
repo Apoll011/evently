@@ -103,14 +103,16 @@ docker-compose.yml
 
 ## API Overview
 
-| Module        | Base Path                        | Description                        |
-|---------------|----------------------------------|------------------------------------|
-| Auth          | `/auth`                          | Register, login, current user      |
-| Events        | `/events`                        | CRUD, publish, cancel, stats       |
-| Ticket Types  | `/events/:eventId/ticket-types`  | Tiers per event                    |
-| Orders        | `/orders`                        | Create orders, Stripe webhook      |
-| Tickets       | `/ticket`                        | Issuance, validation, cancel/refund|
- 
+| Module        | Base Path                        | Description                                    | Auth                        |
+|---------------|-----------------------------------|-------------------------------------------------|-----------------------------|
+| Auth          | `/auth`                           | Register, login, current organizer               | `/me` requires a token      |
+| Events        | `/events`                         | CRUD, publish, cancel, stats, orders, check-ins  | Organizer-owned              |
+| Ticket Types  | `/events/:eventId/ticket-types`   | Tiers per event                                  | Reads public, writes owner   |
+| Orders        | `/orders`                         | Create orders, Stripe webhook                    | Public (buyer flow)          |
+| Tickets       | `/tickets`                        | Issuance lookup, check-in, cancel/refund          | Reads public, writes owner   |
+
+Every event belongs to exactly one **Organizer**. Organizers register/login via `/auth` and get back a JWT; pass it as `Authorization: Bearer <token>` to manage their own events, ticket types, and check-ins. Buyers never authenticate — placing an order and fetching a receipt/ticket by its (unguessable) ID stays public.
+
 ---
 
 ## Payment Flow
