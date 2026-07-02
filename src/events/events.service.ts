@@ -24,6 +24,10 @@ export class EventsService {
 		return this.db.event.findMany();
 	}
 
+	findAllTickets(id: string) {
+		return this.db.ticket.findMany({ where: { eventId: id } });
+	}
+
 	findOne(id: string) {
 		return this.db.event.findUnique({
 			where: {

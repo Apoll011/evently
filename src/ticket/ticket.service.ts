@@ -92,10 +92,6 @@ export class TicketService {
 		}
 	}
 
-	findAll(eventId: string) {
-		return this.db.ticket.findMany({ where: { eventId } });
-	}
-
 	async cancel(id: string) {
 		return this.transitionOnlyIfIssued(id, TicketStatus.CANCELLED);
 	}

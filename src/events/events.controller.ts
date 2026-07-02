@@ -34,6 +34,11 @@ export class EventsController {
 		return this.eventsService.findAll(organizerId, 'PUBLISHED');
 	}
 
+	@Get(':id/ticket')
+	eventTickets(@Param('id', ParseUUIDPipe) id: string) {
+		return this.eventsService.findAllTickets(id);
+	}
+
 	@Get(':id/stat')
 	stat(@Param('id', ParseUUIDPipe) id: string) {
 		return this.eventsService.stat(id);

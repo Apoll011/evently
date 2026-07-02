@@ -38,11 +38,6 @@ export class TicketController {
 		return this.ticketService.findOne(id);
 	}
 
-	@Get('event/:eventId')
-	eventTickets(@Param('eventId', ParseUUIDPipe) eventId: string) {
-		return this.ticketService.findAll(eventId);
-	}
-
 	@Patch(':id/cancel')
 	cancel(@Param('id', ParseUUIDPipe) id: string) {
 		return this.ticketService.cancel(id);
