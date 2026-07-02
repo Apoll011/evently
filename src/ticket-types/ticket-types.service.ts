@@ -39,9 +39,14 @@ export class TicketTypesService {
 		return this.db.ticketType.findFirst({ where: { id, eventId } });
 	}
 
-	update(eventId: string, id: string, dto: UpdateTicketTypeDto) {
+	async update(eventId: string, id: string, dto: UpdateTicketTypeDto) {
+		const existing = await this.db.ticketType.findFirst({ where: { id, eventId } });
+		if (!existing) {
+			throw new NotFoundException(`Ticket type with ID ${id} not found`);
+		}
+
 		return this.db.ticketType.update({
-			where: { id, eventId },
+			where: { id },
 			data: {
 				...dto,
 				customFields: dto.customFields
