@@ -4,30 +4,32 @@ import {
 	ForbiddenException,
 	NotFoundException,
 } from '@nestjs/common';
-import { AuthenticatedRequest } from '../../auth/auth.types';
+import {
+	AuthenticatedOrganizer,
+	AuthenticatedRequest,
+	AuthenticatedScanner,
+} from '../../auth/auth.types';
 
 /**
- * Shared skeleton for "does this organizer own the resource they're touching"
- * guards. Subclasses only need to say how to load the resource's organizerId.
- * Must run after JwtAuthGuard (so `req.user` is populated) — e.g.
- * `@UseGuards(JwtAuthGuard, EventOwnershipGuard)`.
+ * Shared skeleton for "does this organizer or scanner own the resource they're touching"
+ * guards. Subclasses only need to say how to load the resource's organizerId or eventId.
+ * Must run after JwtAuthGuard or ScannerAuthGuard (so `req.user` is populated).
  */
 export abstract class OwnershipGuardBase implements CanActivate {
-	/** Resolve the organizerId that owns the resource for this request, or null if the resource doesn't exist. */
-	protected abstract resolveOwnerId(
-		request: AuthenticatedRequest,
-	): Promise<string | null>;
+	/** Resolve the owner identity (organizerId or eventId) that owns the resource for this request, or null if the resource doesn't exist. */
+	protected abstract resolveOwnerId(request: any): Promise<string | null>;
 
 	/** Human-readable resource name used in the 404 message. */
 	protected abstract resourceName: string;
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const request = context
-			.switchToHttp()
-			.getRequest<AuthenticatedRequest>();
+		const request = context.switchToHttp().getRequest();
 
-		if (!request.user) {
-			// JwtAuthGuard should have already rejected this — fail closed just in case.
+		const user = request.user as
+			AuthenticatedOrganizer | AuthenticatedScanner | undefined;
+
+		if (!user) {
+			// AuthGuard should have already rejected this — fail closed just in case.
 			throw new ForbiddenException('Authentication required');
 		}
 
@@ -36,10 +38,19 @@ export abstract class OwnershipGuardBase implements CanActivate {
 			throw new NotFoundException(`${this.resourceName} not found`);
 		}
 
-		if (ownerId !== request.user.organizerId) {
-			throw new ForbiddenException(
-				`You don't have access to this ${this.resourceName.toLowerCase()}`,
-			);
+		if ('organizerId' in user) {
+			if (ownerId !== user.organizerId) {
+				throw new ForbiddenException(
+					`You don't have access to this ${this.resourceName.toLowerCase()}`,
+				);
+			}
+		} else if ('eventId' in user) {
+			// For scanners, the resolveOwnerId MUST return the eventId of the resource.
+			if (ownerId !== user.eventId) {
+				throw new ForbiddenException(
+					`This scanner is not authorized for this event`,
+				);
+			}
 		}
 
 		return true;

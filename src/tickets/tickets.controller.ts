@@ -5,16 +5,15 @@ import {
 	Param,
 	ParseUUIDPipe,
 	Query,
-	Body,
 	Post,
 	UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { TicketsService } from './tickets.service';
-import { FieldValue } from '../orders/dto/create-order.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TicketOwnershipGuard } from '../common/guards/ticket-ownership.guard';
 import { CheckInOwnershipGuard } from '../common/guards/check-in-ownership.guard';
+import { ScannerAuthGuard } from '../auth/scanner-auth.guard';
 
 @ApiTags('tickets')
 @Controller('tickets')
@@ -25,8 +24,8 @@ export class TicketsController {
 	// posts the two halves back here. Requires the scanning organizer to own
 	// the event the ticket belongs to.
 	@Post('check-in')
-	@ApiBearerAuth('BearerAuth')
-	@UseGuards(JwtAuthGuard, CheckInOwnershipGuard)
+	@ApiBearerAuth('BearerAuthScanner')
+	@UseGuards(ScannerAuthGuard, CheckInOwnershipGuard)
 	checkIn(
 		@Query('o') data: string,
 		@Query('s') signature: string,

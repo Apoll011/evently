@@ -33,6 +33,15 @@ async function bootstrap() {
 			},
 			'BearerAuth',
 		)
+		.addBearerAuth(
+			{
+				type: 'http',
+				scheme: 'bearer',
+				bearerFormat: 'JWT',
+				description: 'Bearer token authentication for Scanner',
+			},
+			'BearerAuthScanner',
+		)
 		.build();
 
 	const options: SwaggerDocumentOptions = {

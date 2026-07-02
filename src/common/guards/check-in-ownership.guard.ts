@@ -23,21 +23,31 @@ export class CheckInOwnershipGuard extends OwnershipGuardBase {
 		super();
 	}
 
-	protected async resolveOwnerId(
-		request: AuthenticatedRequest,
-	): Promise<string | null> {
+	protected async resolveOwnerId(request: any): Promise<string | null> {
 		const data = request.query.o;
 		if (typeof data !== 'string') return null;
 
-		let eventId: string;
+		let eventIdFromTicket: string;
 		try {
-			eventId = this.ticketSigningService.decompress(data).eventId;
+			eventIdFromTicket =
+				this.ticketSigningService.decompress(data).eventId;
 		} catch {
 			return null;
 		}
 
+		const user = request.user as
+			AuthenticatedOrganizer | AuthenticatedScanner;
+
+		if ('eventId' in user) {
+			// If it's a scanner, we return the eventId from the ticket.
+			// The base guard will compare it with the scanner's own eventId.
+			return eventIdFromTicket;
+		}
+
+		// If it's an organizer, we return the organizerId of the event.
+		// The base guard will compare it with the organizer's own organizerId.
 		const event = await this.db.event.findUnique({
-			where: { id: eventId },
+			where: { id: eventIdFromTicket },
 			select: { organizerId: true },
 		});
 		return event?.organizerId ?? null;

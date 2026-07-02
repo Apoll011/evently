@@ -1,6 +1,7 @@
 import {
 	ConflictException,
 	Injectable,
+	NotFoundException,
 	UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -8,7 +9,8 @@ import * as bcrypt from 'bcrypt';
 import { DbService } from '../db/db.service';
 import { RegisterOrganizerDto } from './dto/register-organizer.dto';
 import { LoginDto } from './dto/login.dto';
-import { JwtPayload } from './auth.types';
+import { JwtPayload, JwtScannerSessionPayload } from './auth.types';
+import { createHash, randomBytes } from 'crypto';
 
 const BCRYPT_SALT_ROUNDS = 12;
 
@@ -80,6 +82,60 @@ export class AuthService {
 			where: { id: organizerId },
 			select: { id: true, name: true, email: true, createdAt: true },
 		});
+	}
+
+	scanner(sessionId: string) {
+		return this.db.scannerSession.findUnique({
+			where: { id: sessionId },
+			select: { id: true, eventId: true, organizerId: true },
+		});
+	}
+
+	async createScanner(organizerId: string, eventId: string) {
+		const token = randomBytes(32).toString('hex');
+		const tokenHash = createHash('sha256').update(token).digest('hex');
+		await this.db.scannerSession.create({
+			data: {
+				eventId,
+				organizerId,
+				tokenHash,
+				expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+			},
+		});
+		return {
+			url: `ticket-scanner://pair/${token}`,
+		};
+	}
+
+	async scannerLogin(token: string) {
+		const tokenHash = createHash('sha256').update(token).digest('hex');
+		const existing = await this.db.scannerSession.findFirst({
+			where: { tokenHash },
+		});
+		if (!existing) {
+			throw new UnauthorizedException(`Invalid pairing token`);
+		}
+
+		if (new Date() > existing.expiresAt) {
+			throw new UnauthorizedException('Session Expired');
+		}
+
+		if (existing.used) {
+			throw new UnauthorizedException('Session Already Used');
+		}
+
+		await this.db.scannerSession.update({
+			where: { id: existing.id },
+			data: { used: true },
+		});
+
+		const payload: JwtScannerSessionPayload = {
+			sub: existing.id,
+			eventId: existing.eventId,
+		};
+		return {
+			accessToken: this.jwtService.sign(payload),
+		};
 	}
 
 	private buildAuthResponse(

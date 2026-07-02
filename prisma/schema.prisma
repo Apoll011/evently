@@ -44,6 +44,7 @@ model Organizer {
   updatedAt    DateTime @updatedAt
 
   events       Event[]
+  scannerSession      ScannerSession[]
 }
 
 model Event {
@@ -74,6 +75,7 @@ model Event {
   orders              Order[]
   ticket              Ticket[]
   checkIns            CheckIn[]
+  scannerSession      ScannerSession[]
 }
 
 model TicketType {
@@ -132,6 +134,23 @@ model OrderItem {
   quantity       Int
   unitPrice      Int
 }
+
+model ScannerSession {
+  id             String      @id @default(uuid())
+
+  eventId        String
+  event          Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  organizerId    String
+  organizer      Organizer   @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+
+  tokenHash      String      @unique
+
+  expiresAt      DateTime
+
+  used           Boolean     @default(false)
+}
+
 
 model Ticket {
   id                String   @id @default(uuid())
