@@ -27,7 +27,7 @@ export class TicketService {
 		const hashedTicket = this.ticketSigningService.decompress(data);
 
 		const ticket = await this.db.ticket.findUnique({
-			where: { code: signature, orderId: hashedTicket.orderId, eventId: hashedTicket.eventId },
+			where: { code: signature },
 			include: { event: true, ticketType: true },
 		});
 
@@ -36,6 +36,8 @@ export class TicketService {
 		if (ticket.status !== TicketStatus.ISSUED) {
 			throw new UnauthorizedException(`Ticket not allowed: (${ticket.status})`);
 		}
+
+		if(ticket.orderId !== hashedTicket.orderId || ticket.eventId !== hashedTicket.eventId) throw new UnauthorizedException(`Ticket is not valid`);
 
 		const valid = this.ticketSigningService.verifyHash(
 			hashedTicket,
