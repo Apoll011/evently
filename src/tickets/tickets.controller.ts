@@ -36,10 +36,14 @@ export class TicketsController {
 	}
 
 	// Read-only signature check — doesn't mutate anything, safe to leave public
-	// for a scanner app to show a "looks valid" preview before check-in.
 	@Get('verify')
 	verify(@Query('o') data: string, @Query('s') signature: string) {
 		return this.ticketsService.verifySignature(data, signature);
+	}
+
+	@Get()
+	findOneSigned(@Query('o') data: string, @Query('s') signature: string) {
+		return this.ticketsService.findOneSigned(data, signature);
 	}
 
 	@Get(':id/url')

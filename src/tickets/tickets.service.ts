@@ -96,6 +96,36 @@ export class TicketsService {
 		};
 	}
 
+	async findOneSigned(data: string, signature: string) {
+		let hashedTicket: ReturnType<TicketSigningService['decompress']>;
+		try {
+			hashedTicket = this.ticketSigningService.decompress(data);
+		} catch {
+			throw new UnauthorizedException('Malformed ticket payload');
+		}
+		const ticket = await this.db.ticket.findUnique({
+			where: { code: signature },
+			include: { event: true, ticketType: true },
+		});
+
+		if (!ticket) throw new NotFoundException('This ticket does not exist');
+
+		if (
+			ticket.orderId !== hashedTicket.orderId ||
+			ticket.eventId !== hashedTicket.eventId
+		) {
+			throw new UnauthorizedException('Ticket is not valid');
+		}
+
+		const valid = this.ticketSigningService.verifyHash(
+			hashedTicket,
+			signature,
+		);
+		if (!valid) throw new UnauthorizedException('Invalid signature');
+
+		return ticket;
+	}
+
 	verifySignature(data: string, signature: string): { valid: boolean } {
 		try {
 			const ticketHash = this.ticketSigningService.decompress(data);
