@@ -24,11 +24,6 @@ export class OrdersController {
 		return this.ordersService.findTickets(id);
 	}
 
-	@Get(':id/url')
-	url(@Param('id', ParseUUIDPipe) id: string) {
-		return this.ordersService.url(id);
-	}
-
 	@Get(':id')
 	findOne(@Param('id', ParseUUIDPipe) id: string) {
 		return this.ordersService.findOne(id);

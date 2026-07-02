@@ -125,13 +125,16 @@ model Ticket {
   orderId           String
   order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  eventId         String
-  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId           String
+  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   ticketTypeId      String
   ticketType        TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
 
   code              String   @unique
+  payload           String
+
+  index             Int
 
   status            TicketStatus @default(ISSUED)
 

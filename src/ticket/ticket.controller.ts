@@ -27,6 +27,12 @@ export class TicketController {
 		return this.ticketService.validSignature(data, signature);
 	}
 
+
+	@Get(':id/url')
+	url(@Param('id', ParseUUIDPipe) id: string) {
+		return this.ticketService.url(id);
+	}
+
 	@Get(':id')
 	findOne(@Param('id') id: string) {
 		return this.ticketService.findOne(id);

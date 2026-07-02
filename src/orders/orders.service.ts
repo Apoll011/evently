@@ -11,8 +11,7 @@ import {
 } from './dto/create-order.dto';
 import { DbService } from '../db/db.service';
 import { Order, PaymentStatus, Prisma, TicketStatus } from '@prisma/client';
-import { randomBytes } from 'crypto';
-import { FORMAT_VERSION, TicketSigningService } from '../ticket-signing/ticket-signing.service';
+import { TicketSigningService } from '../ticket-signing/ticket-signing.service';
 
 @Injectable()
 export class OrdersService {
@@ -136,48 +135,33 @@ export class OrdersService {
 		return this.db.ticket.createMany({
 			data: orderItems.flatMap((item) => {
 				const matchedOrder = orderItemMap.get(item.ticketTypeId);
-				return Array.from({ length: item.quantity }, (_, index) => ({
-					orderId: order.id,
-					ticketTypeId: item.ticketTypeId,
-					eventId: order.eventId,
-					code: this.ticketSigningService.sign({
+
+				return Array.from({ length: item.quantity }, (_, index) => {
+					const hash = this.ticketSigningService.hashTicket({
 						orderId: order.id,
 						eventId: order.eventId,
+						index: index,
 						holderName: order.buyerName,
 						holderEmail: order.buyerEmail,
 						customFields: matchedOrder?.customFields?.[index] ?? [],
-					}),
-					status: TicketStatus.ISSUED,
-					holderName: order.buyerName,
-					holderEmail: order.buyerEmail,
-					customFieldValues:
+					});
+					
+					return {
+						orderId: order.id,
+						ticketTypeId: item.ticketTypeId,
+						eventId: order.eventId,
+						code: this.ticketSigningService.signHashed(hash),
+						payload: this.ticketSigningService.compress(hash),
+						index: index,
+						status: TicketStatus.ISSUED,
+						holderName: order.buyerName,
+						holderEmail: order.buyerEmail,
+						customFieldValues:
 						matchedOrder?.customFields?.[index] ?? undefined,
-				}));
+					}
+				});
 			}),
 		});
-	}
-
-	async url(id: string) {
-		const ticket = await this.db.ticket.findUnique({
-			where: { id: id },
-		});
-		if (!ticket) throw new NotFoundException('Ticket Not Found');
-
-		const signticket = {
-			orderId: ticket.orderId,
-			eventId: ticket.eventId,
-			holderName: ticket.holderName,
-			holderEmail: ticket.holderEmail,
-			customFields: ticket.customFieldValues as FieldValue[],
-		};
-
-		const hash = this.ticketSigningService.hashTicket(signticket);
-
-		const signature = this.ticketSigningService.sign(signticket);
-
-		const compressed = this.ticketSigningService.compress(hash);
-
-		return `ticket://v${FORMAT_VERSION}/${compressed}@${signature}`;
 	}
 
 	async createCash(orderId: string, orderItemsMaker: CreateOrderItem[]) {

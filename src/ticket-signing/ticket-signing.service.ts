@@ -6,6 +6,7 @@ import { FieldValue } from '../orders/dto/create-order.dto';
 export type SignTicket = {
 	orderId: string;
 	eventId: string;
+	index: number;
 	holderName: string | null;
 	holderEmail: string | null;
 	customFields: FieldValue[];
@@ -14,6 +15,7 @@ export type SignTicket = {
 export type TicketHash = {
 	orderId: string;
 	eventId: string;
+	index: number;
 	holderNameHash: string;
 	holderEmailHash: string;
 	customFieldsHash: string;
@@ -21,7 +23,7 @@ export type TicketHash = {
 
 
 const HASH_BYTES = 16;
-export const FORMAT_VERSION = 1;
+export const FORMAT_VERSION = 2;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UUID_MARKER = 0xff;
 
@@ -56,7 +58,12 @@ export class TicketSigningService implements OnModuleInit {
 
 	/** Sign a ticket. Returns a base64url signature over the canonical binary payload. */
 	sign(ticket: SignTicket): string {
-		const packed = this.pack(this.hashTicket(ticket));
+		return this.signHashed(this.hashTicket(ticket));
+	}
+
+	/** Sign a ticket hash. Returns a base64url signature over the canonical binary payload. */
+	signHashed(ticket: TicketHash): string {
+		const packed = this.pack(ticket);
 		return sign(null, packed, this.privateKey).toString('base64url');
 	}
 
@@ -78,6 +85,7 @@ export class TicketSigningService implements OnModuleInit {
 		return {
 			orderId: ticket.orderId,
 			eventId: ticket.eventId,
+			index: ticket.index,
 			holderNameHash: this.hashField(ticket.holderName),
 			holderEmailHash: this.hashField(ticket.holderEmail),
 			customFieldsHash: this.hashCustomFields(ticket.customFields),
@@ -112,6 +120,7 @@ export class TicketSigningService implements OnModuleInit {
 	private pack(ticket: TicketHash): Buffer {
 		return Buffer.concat([
 			Buffer.from([FORMAT_VERSION]),
+			Buffer.from([ticket.index]),
 			this.idToBuffer(ticket.orderId),
 			this.idToBuffer(ticket.eventId),
 			this.hashHexToBuffer(ticket.holderNameHash),
@@ -130,6 +139,9 @@ export class TicketSigningService implements OnModuleInit {
 			throw new Error(`Unsupported ticket format version: ${version}`);
 		}
 
+		const index = buf.readUInt8(offset);
+		offset += 1;
+
 		const order = this.bufferToId(buf, offset);
 		offset = order.next;
 		const event = this.bufferToId(buf, offset);
@@ -146,7 +158,7 @@ export class TicketSigningService implements OnModuleInit {
 			throw new Error('Ticket payload has unexpected trailing data');
 		}
 
-		return { orderId: order.id, eventId: event.id, holderNameHash, holderEmailHash, customFieldsHash };
+		return { orderId: order.id, eventId: event.id, index: index, holderNameHash, holderEmailHash, customFieldsHash };
 	}
 
 	private idToBuffer(id: string): Buffer {

@@ -8,7 +8,7 @@ import { TicketStatus } from '@prisma/client'; // adjust import path/name to mat
 import { DbService } from '../db/db.service';
 import { FieldValue } from '../orders/dto/create-order.dto';
 import {
-	SignTicket,
+	FORMAT_VERSION,
 	TicketSigningService,
 } from '../ticket-signing/ticket-signing.service';
 
@@ -132,4 +132,13 @@ export class TicketService {
 			data: { customFieldValues: fields },
 		});
 	}
+
+	async url(id: string) {
+		const ticket = await this.db.ticket.findUnique({
+			where: { id: id },
+		});
+		if (!ticket) throw new NotFoundException('Ticket Not Found');
+
+		return `ticket://v${FORMAT_VERSION}/${ticket.payload}@${ticket.code}`;
+	}	
 }
