@@ -130,7 +130,7 @@ export class TicketsService {
 	field(ticketId: string, fields: FieldValue[]) {
 		return this.db.ticket.update({
 			where: { id: ticketId },
-			data: { customFieldValues: fields },
+ 		data: { customFieldValues: fields as any },
 		});
 	}
 

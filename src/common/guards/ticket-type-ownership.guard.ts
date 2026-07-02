@@ -19,11 +19,12 @@ export class TicketTypeOwnershipGuard extends OwnershipGuardBase {
 	protected async resolveOwnerId(
 		request: AuthenticatedRequest,
 	): Promise<string | null> {
-		const { eventId, id } = request.params;
+		const id = request.params.id as string;
+		const eventId = request.params.eventId as string;
 		const ticketType = await this.db.ticketType.findFirst({
 			where: { id, eventId },
-			select: { event: { select: { organizerId: true } } },
+			include: { event: { select: { organizerId: true } } },
 		});
-		return ticketType?.event.organizerId ?? null;
+		return ticketType?.event?.organizerId ?? null;
 	}
 }

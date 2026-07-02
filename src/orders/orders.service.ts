@@ -165,7 +165,7 @@ export class OrdersService {
 						holderName: order.buyerName,
 						holderEmail: order.buyerEmail,
 						customFieldValues:
-						matchedOrder?.customFields?.[index] ?? undefined,
+						(matchedOrder?.customFields?.[index] as any) ?? undefined,
 					}
 				});
 			}),

@@ -5,7 +5,7 @@ import { RegisterOrganizerDto } from './dto/register-organizer.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentOrganizer } from './current-organizer.decorator';
-import { AuthenticatedOrganizer } from './auth.types';
+import type { AuthenticatedOrganizer } from './auth.types';
 
 @ApiTags('auth')
 @Controller('auth')

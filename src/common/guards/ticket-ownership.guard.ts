@@ -15,9 +15,9 @@ export class TicketOwnershipGuard extends OwnershipGuardBase {
 		request: AuthenticatedRequest,
 	): Promise<string | null> {
 		const ticket = await this.db.ticket.findUnique({
-			where: { id: request.params.id },
-			select: { event: { select: { organizerId: true } } },
+			where: { id: request.params.id as string },
+			include: { event: { select: { organizerId: true } } },
 		});
-		return ticket?.event.organizerId ?? null;
+		return ticket?.event?.organizerId ?? null;
 	}
 }

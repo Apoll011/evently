@@ -19,7 +19,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { EventOwnershipGuard } from '../common/guards/event-ownership.guard';
 import { CurrentOrganizer } from '../auth/current-organizer.decorator';
-import { AuthenticatedOrganizer } from '../auth/auth.types';
+import type { AuthenticatedOrganizer } from '../auth/auth.types';
 
 @ApiTags('events')
 @Controller('events')

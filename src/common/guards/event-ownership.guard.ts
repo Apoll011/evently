@@ -14,7 +14,7 @@ export class EventOwnershipGuard extends OwnershipGuardBase {
 	protected async resolveOwnerId(
 		request: AuthenticatedRequest,
 	): Promise<string | null> {
-		const eventId = request.params.eventId ?? request.params.id;
+		const eventId = (request.params.eventId ?? request.params.id) as string;
 		const event = await this.db.event.findUnique({
 			where: { id: eventId },
 			select: { organizerId: true },
