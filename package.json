@@ -1,6 +1,6 @@
 {
 	"name": "evently",
-	"version": "2.1.0",
+	"version": "2.5.0",
 	"description": "Backend API for event and ticket management. Create events, define ticket tiers, sell tickets online or in-person via Stripe or cash, and validate entry at the door with QR codes.",
 	"author": "apoll011",
 	"private": true,
