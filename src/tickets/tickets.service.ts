@@ -24,8 +24,12 @@ export class TicketsService {
 	}
 
 	async checkIn(data: string, signature: string, gate?: string) {
-		const hashedTicket = this.ticketSigningService.decompress(data);
-
+		let hashedTicket: ReturnType<TicketSigningService['decompress']>;
+		try {
+			hashedTicket = this.ticketSigningService.decompress(data);
+		} catch {
+			throw new UnauthorizedException('Malformed ticket payload');
+		}
 		const ticket = await this.db.ticket.findUnique({
 			where: { code: signature },
 			include: { event: true, ticketType: true },
