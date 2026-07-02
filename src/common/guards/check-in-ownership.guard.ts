@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { TicketSigningService } from '../../ticket-signing/ticket-signing.service';
 import { DbService } from '../../db/db.service';
-import { AuthenticatedRequest } from '../../auth/auth.types';
+import {
+	AuthenticatedScanner,
+	AuthenticatedOrganizer,
+} from '../../auth/auth.types';
 import { OwnershipGuardBase } from './ownership.guard.base';
 
 /**
