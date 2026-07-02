@@ -115,11 +115,7 @@ export class TicketsService {
 			data: { status },
 		});
 
-		if (count === 0) {
-			const ticket = await this.db.ticket.findUnique({ where: { id } });
-			if (!ticket) throw new NotFoundException('This ticket does not exist');
-			throw new UnauthorizedException(`Ticket not allowed (${ticket.status})`);
-		}
+			throw new ConflictException(`Ticket not allowed (${ticket.status})`);
 
 		return this.db.ticket.findUnique({ where: { id } });
 	}
