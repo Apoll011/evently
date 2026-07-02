@@ -19,6 +19,11 @@ export class TicketController {
 		return this.ticketService.validate(code, gate);
 	}
 
+	@Get('v')
+	quickValidate(@Query('o') data: string, @Query('s') signature: string) {
+		return this.ticketService.validSignature(data, signature);
+	}
+
 	@Get(':id')
 	findOne(@Param('id') id: string) {
 		return this.ticketService.findOne(id);

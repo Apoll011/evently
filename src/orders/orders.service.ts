@@ -8,10 +8,14 @@ import { CreateOrderDto, CreateOrderItem } from './dto/create-order.dto';
 import { DbService } from '../db/db.service';
 import { Order, PaymentStatus, Prisma, TicketStatus } from '@prisma/client';
 import { randomBytes } from 'crypto';
+import { TicketSigningService } from '../ticket-signing/ticket-signing.service';
 
 @Injectable()
 export class OrdersService {
-	constructor(private db: DbService) {}
+	constructor(
+		private db: DbService,
+		private readonly ticketSigningService: TicketSigningService,
+	) {}
 
 	async create(createOrderDto: CreateOrderDto) {
 		if (createOrderDto.paymentMethod == 'CASH') {
@@ -132,7 +136,13 @@ export class OrdersService {
 					orderId: order.id,
 					ticketTypeId: item.ticketTypeId,
 					eventId: order.eventId,
-					code: randomBytes(32).toString('hex').toUpperCase(),
+					code: this.ticketSigningService.sign({
+						orderId: order.id,
+						eventId: order.eventId,
+						holderName: order.buyerName,
+						holderEmail: order.buyerEmail,
+						customFields: matchedOrder?.customFields?.[index] ?? [],
+					}),
 					status: TicketStatus.ISSUED,
 					holderName: order.buyerName,
 					holderEmail: order.buyerEmail,

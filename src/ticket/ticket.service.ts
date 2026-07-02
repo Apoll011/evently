@@ -5,10 +5,17 @@ import {
 } from '@nestjs/common';
 import { DbService } from '../db/db.service';
 import { FieldValue } from '../orders/dto/create-order.dto';
+import {
+	SignTicket,
+	TicketSigningService,
+} from '../ticket-signing/ticket-signing.service';
 
 @Injectable()
 export class TicketService {
-	constructor(private db: DbService) {}
+	constructor(
+		private db: DbService,
+		private readonly ticketSigningService: TicketSigningService,
+	) {}
 
 	findOne(id: string) {
 		return this.db.ticket.findUnique({
@@ -31,6 +38,18 @@ export class TicketService {
 			throw new UnauthorizedException(
 				`Ticket not allowed: (${ticket.status})`,
 			);
+
+		const valid = this.ticketSigningService.verify(
+			{
+				orderId: ticket.orderId,
+				eventId: ticket.eventId,
+				holderName: ticket.holderName,
+				holderEmail: ticket.holderEmail,
+				customFields: ticket.customFieldValues as FieldValue[],
+			},
+			code,
+		);
+		if (!valid) throw new UnauthorizedException('Invalid Signature');
 
 		const event = await this.db.event.findUnique({
 			where: {
@@ -80,6 +99,13 @@ export class TicketService {
 			holderName: ticket.holderName,
 			event: event.name,
 			checkedInAt: new Date().toISOString(),
+		};
+	}
+
+	validSignature(data: string, signature: string): { valid: boolean } {
+		const ticketHash = this.ticketSigningService.decompress(data);
+		return {
+			valid: this.ticketSigningService.verifyHash(ticketHash, signature),
 		};
 	}
 
