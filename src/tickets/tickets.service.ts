@@ -10,7 +10,6 @@ import {
 	FORMAT_VERSION,
 	TicketSigningService,
 } from '../ticket-signing/ticket-signing.service';
-import { FieldValue } from '../orders/dto/create-order.dto';
 
 @Injectable()
 export class TicketsService {
