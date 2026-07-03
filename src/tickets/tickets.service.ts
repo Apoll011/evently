@@ -4,12 +4,19 @@ import {
 	NotFoundException,
 	UnauthorizedException,
 } from '@nestjs/common';
-import { TicketStatus } from '@prisma/client';
+import {Prisma, TicketStatus} from '@prisma/client';
 import { DbService } from '../db/db.service';
 import {
 	FORMAT_VERSION,
 	TicketSigningService,
 } from '../ticket-signing/ticket-signing.service';
+
+type TicketWithRelations = Prisma.TicketGetPayload<{
+	include: {
+		event: true;
+		ticketType: true;
+	};
+}>;
 
 @Injectable()
 export class TicketsService {
@@ -26,16 +33,15 @@ export class TicketsService {
 		return ticket;
 	}
 
-	async checkIn(data: string, signature: string, gate?: string) {
+	async checkInSignature(data: string, signature: string, gate?: string) {
 		const valid = this.ticketSigningService.verifyPayload(
 			Buffer.from(data, 'base64url'),
 			signature,
 		);
 		if (!valid) throw new UnauthorizedException('Invalid signature');
 
-		let hashedTicket: ReturnType<TicketSigningService['decompress']>;
 		try {
-			hashedTicket = this.ticketSigningService.decompress(data);
+			this.ticketSigningService.decompress(data);
 		} catch {
 			throw new UnauthorizedException('Malformed ticket payload');
 		}
@@ -44,16 +50,30 @@ export class TicketsService {
 			include: { event: true, ticketType: true },
 		});
 
+		return this.checkIn(ticket, gate);
+	}
+
+	async checkInCode(eventId: string, ticketCode: string, gate?: string) {
+		const ticket = await this.db.ticket.findUnique({
+			where: {
+				eventId_ticketCode: {
+					eventId,
+					ticketCode
+				}
+			},
+			include: {event: true, ticketType: true},
+		});
+
+		return this.checkIn(ticket, gate);
+	}
+
+	async checkIn(ticket: TicketWithRelations | null, gate?: string) {
 		if (!ticket) throw new NotFoundException('This ticket does not exist');
 
 		if (ticket.status !== TicketStatus.ISSUED) {
 			throw new UnauthorizedException(
 				`Ticket not allowed: (${ticket.status})`,
 			);
-		}
-
-		if (ticket.eventId !== hashedTicket.eventId) {
-			throw new UnauthorizedException('Ticket is not valid');
 		}
 
 		const event = ticket.event;
@@ -95,6 +115,7 @@ export class TicketsService {
 			checkedInAt: checkedInAt.toISOString(),
 		};
 	}
+
 
 	async findOneSigned(data: string, signature: string) {
 		let hashedTicket: ReturnType<TicketSigningService['decompress']>;

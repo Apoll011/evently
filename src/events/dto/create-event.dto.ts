@@ -47,6 +47,12 @@ export class CreateEventDto {
 	@IsBoolean()
 	requiresNamedTickets?: boolean;
 
+
+	@ApiPropertyOptional({ default: true })
+	@IsOptional()
+	@IsBoolean()
+	internetAccess?: boolean;
+
 	@ApiPropertyOptional({ default: 0, description: '0 means unlimited' })
 	@IsOptional()
 	@IsInt()

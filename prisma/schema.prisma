@@ -1,5 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -34,164 +34,170 @@ enum TicketStatus {
 }
 
 model Organizer {
-  id           String   @id @default(uuid())
+  id String @id @default(uuid())
 
   name         String
-  email        String   @unique
+  email        String @unique
   passwordHash String
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  events       Event[]
-  scannerSession      ScannerSession[]
+  events         Event[]
+  scannerSession ScannerSession[]
 }
 
 model Event {
-  id                   String      @id @default(uuid())
-  organizerId          String
-  organizer            Organizer   @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  organizerId String
+  organizer   Organizer @relation(fields: [organizerId], references: [id], onDelete: Cascade)
 
-  name                 String
-  description          String?
-  bannerImage          String?
+  name        String
+  description String?
+  bannerImage String?
 
-  startsAt             DateTime
-  endsAt               DateTime
+  startsAt DateTime
+  endsAt   DateTime
 
-  location             String?
-  onlineUrl            String?
+  location  String?
+  onlineUrl String?
 
-  status               EventStatus @default(DRAFT)
+  status EventStatus @default(DRAFT)
 
-  requiresNamedTickets Boolean     @default(false)
+  requiresNamedTickets Boolean @default(false)
 
-  capacity             Int         @default(0)
+  capacity Int @default(0)
 
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  ticketTypes         TicketType[]
-  orders              Order[]
-  ticket              Ticket[]
-  checkIns            CheckIn[]
-  scannerSession      ScannerSession[]
+  internetAccess Boolean @default(true)
+
+  ticketTypes    TicketType[]
+  orders         Order[]
+  ticket         Ticket[]
+  checkIns       CheckIn[]
+  scannerSession ScannerSession[]
 }
 
 model TicketType {
-  id            String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  eventId       String
-  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  name          String
-  description   String?
+  name        String
+  description String?
 
-  price         Int
-  quantity      Int
-  sold          Int      @default(0)
+  price    Int
+  quantity Int
+  sold     Int @default(0)
 
-  customFields  Json?
+  customFields Json?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tickets       Ticket[]
-  orders        OrderItem[]
+  tickets Ticket[]
+  orders  OrderItem[]
 }
 
 model Order {
-  id              String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  eventId         String
-  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  buyerName       String?
-  buyerEmail      String?
+  buyerName  String?
+  buyerEmail String?
 
-  paymentMethod   PaymentMethod
-  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(PENDING)
 
   stripeSessionId String?
 
-  totalAmount     Int
+  totalAmount Int
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  items           OrderItem[]
-  tickets         Ticket[]
+  items   OrderItem[]
+  tickets Ticket[]
 }
 
 model OrderItem {
-  id             String     @id @default(uuid())
-  orderId        String
-  order          Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id      String @id @default(uuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  ticketTypeId   String
-  ticketType     TicketType @relation(fields: [ticketTypeId], references: [id])
+  ticketTypeId String
+  ticketType   TicketType @relation(fields: [ticketTypeId], references: [id])
 
-  quantity       Int
-  unitPrice      Int
+  quantity  Int
+  unitPrice Int
 }
 
 model ScannerSession {
-  id             String      @id @default(uuid())
+  id String @id @default(uuid())
 
-  eventId        String
-  event          Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  organizerId    String
-  organizer      Organizer   @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  organizerId String
+  organizer   Organizer @relation(fields: [organizerId], references: [id], onDelete: Cascade)
 
-  tokenHash      String      @unique
+  tokenHash String @unique
 
-  expiresAt      DateTime
+  expiresAt DateTime
 
-  used           Boolean     @default(false)
+  used Boolean @default(false)
 }
 
-
 model Ticket {
-  id                String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  orderId           String
-  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  eventId           String
-  event             Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  ticketTypeId      String
-  ticketType        TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
+  ticketTypeId String
+  ticketType   TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
 
-  code              String   @unique
-  payload           String
+  code    String @unique
+  payload String
 
-  index             Int
+  ticketCode String
 
-  status            TicketStatus @default(ISSUED)
+  index Int
 
-  holderName        String?
-  holderEmail       String?
+  status TicketStatus @default(ISSUED)
+
+  holderName  String?
+  holderEmail String?
 
   customFieldValues Json?
 
-  issuedAt          DateTime @default(now())
-  usedAt            DateTime?
+  issuedAt DateTime  @default(now())
+  usedAt   DateTime?
 
-  checkIns          CheckIn[]
+  checkIns CheckIn[]
+
+  @@unique([code, payload])
+  @@unique([eventId, ticketCode])
 }
 
 model CheckIn {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
-  eventId         String
-  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   scannedAt DateTime @default(now())
 
-  gate      String?
+  gate String?
 }

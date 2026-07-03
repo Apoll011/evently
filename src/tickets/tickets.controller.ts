@@ -14,6 +14,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { TicketOwnershipGuard } from '../common/guards/ticket-ownership.guard';
 import { CheckInOwnershipGuard } from '../common/guards/check-in-ownership.guard';
 import { ScannerAuthGuard } from '../auth/scanner-auth.guard';
+import {CurrentScanner} from "../auth/current-scanner.decorator";
+import {AuthenticatedScanner} from "../auth/auth.types";
 
 @ApiTags('tickets')
 @Controller('tickets')
@@ -31,7 +33,18 @@ export class TicketsController {
 		@Query('s') signature: string,
 		@Query('gate') gate?: string,
 	) {
-		return this.ticketsService.checkIn(data, signature, gate);
+		return this.ticketsService.checkInSignature(data, signature, gate);
+	}
+
+	@Post('code/check-in')
+	@ApiBearerAuth('BearerAuthScanner')
+	@UseGuards(ScannerAuthGuard, CheckInOwnershipGuard)
+	checkInCode(
+		@CurrentScanner() scanner: AuthenticatedScanner,
+		@Query('code') code: string,
+		@Query('gate') gate?: string,
+	) {
+		return this.ticketsService.checkInCode(scanner.eventId, code, gate);
 	}
 
 	// Read-only signature check — doesn't mutate anything, safe to leave public
