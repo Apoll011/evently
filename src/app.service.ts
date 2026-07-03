@@ -5,8 +5,7 @@ import pkg from '../package.json';
 export class AppService {
 	getHello() {
 		return {
-			message: 'Hello World!',
-			service: 'evently',
+			name: 'evently',
 		};
 	}
 

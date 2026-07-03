@@ -13,6 +13,7 @@ yarn-error.log*
 lerna-debug.log*
 
 keys/
+certs/
 
 # OS
 .DS_Store

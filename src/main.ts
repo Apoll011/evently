@@ -1,68 +1,64 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import {
-    DocumentBuilder,
-    SwaggerDocumentOptions,
-    SwaggerModule,
+	DocumentBuilder,
+	SwaggerDocumentOptions,
+	SwaggerModule,
 } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+	const app = await NestFactory.create(AppModule);
 
-    app.useGlobalPipes(
-        new ValidationPipe({
-            whitelist: true,
-            forbidNonWhitelisted: true,
-            transform: true,
-        }),
-    );
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			forbidNonWhitelisted: true,
+			transform: true,
+		}),
+	);
 
-    const config = new DocumentBuilder()
-        .setOpenAPIVersion('3.2.0')
-        .setTitle('Evently API')
-        .setDescription('Manage Events')
-        .setVersion('2.5.0')
-        .addServer('http://localhost:3000', 'Local development server')
-        .addBearerAuth(
-            {
-                type: 'http',
-                scheme: 'bearer',
-                bearerFormat: 'JWT',
-                description: 'Bearer token authentication',
-            },
-            'BearerAuth',
-        )
-        .addBearerAuth(
-            {
-                type: 'http',
-                scheme: 'bearer',
-                bearerFormat: 'JWT',
-                description: 'Bearer token authentication for Scanner',
-            },
-            'BearerAuthScanner',
-        )
-        .build();
+	const config = new DocumentBuilder()
+		.setOpenAPIVersion('3.2.0')
+		.setTitle('Evently API')
+		.setDescription('Manage Events')
+		.setVersion('2.5.0')
+		.addServer('http://localhost:3000', 'Local development server')
+		.addBearerAuth(
+			{
+				type: 'http',
+				scheme: 'bearer',
+				bearerFormat: 'JWT',
+				description: 'Bearer token authentication',
+			},
+			'BearerAuth',
+		)
+		.addBearerAuth(
+			{
+				type: 'http',
+				scheme: 'bearer',
+				bearerFormat: 'JWT',
+				description: 'Bearer token authentication for Scanner',
+			},
+			'BearerAuthScanner',
+		)
+		.build();
 
-    const options: SwaggerDocumentOptions = {
-        operationIdFactory: (_controllerKey: string, methodKey: string) =>
-            methodKey,
-    };
+	const options: SwaggerDocumentOptions = {
+		operationIdFactory: (_controllerKey: string, methodKey: string) =>
+			methodKey,
+	};
 
-    const document = SwaggerModule.createDocument(app, config, options);
+	const document = SwaggerModule.createDocument(app, config, options);
 
-    SwaggerModule.setup('api', app, document);
-    app.enableCors({
-        origin: [
-            'http://localhost:5173',
-            'http://192.168.1.111:5173',
-            'https://fence-washbowl-egotism.ngrok-free.dev'
-        ],
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-        allowedHeaders: 'Content-Type, Authorization',
-        credentials: true, // only if you're using cookies
-    });
-    await app.listen(3000);
+	SwaggerModule.setup('api', app, document);
+	app.enableCors({
+		origin: '*',
+		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+		allowedHeaders: 'Content-Type, Authorization',
+		credentials: true, // only if you're using cookies
+	});
+	await app.listen(3000);
 }
 
 bootstrap();
