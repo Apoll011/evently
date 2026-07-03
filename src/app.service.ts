@@ -3,8 +3,11 @@ import pkg from '../package.json';
 
 @Injectable()
 export class AppService {
-	getHello(): string {
-		return 'Hello World!';
+	getHello() {
+		return {
+			message: 'Hello World!',
+			service: 'evently',
+		};
 	}
 
 	getHealth() {
