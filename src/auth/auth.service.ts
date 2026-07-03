@@ -130,7 +130,8 @@ export class AuthService {
 			throw new UnauthorizedException(`Invalid pairing token`);
 		}
 
-		if (Date.now() > existing.expiresAt.getDate()) {
+		if (new Date() > existing.expiresAt) {
+			// FIXME: Its not working
 			throw new UnauthorizedException('Session Expired');
 		}
 
