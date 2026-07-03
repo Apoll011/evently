@@ -6,11 +6,11 @@ import {
 } from '@nestjs/common';
 import { TicketStatus } from '@prisma/client';
 import { DbService } from '../db/db.service';
-import { FieldValue } from '../orders/dto/create-order.dto';
 import {
 	FORMAT_VERSION,
 	TicketSigningService,
 } from '../ticket-signing/ticket-signing.service';
+import { FieldValue } from '../orders/dto/create-order.dto';
 
 @Injectable()
 export class TicketsService {
@@ -47,10 +47,7 @@ export class TicketsService {
 			);
 		}
 
-		if (
-			ticket.orderId !== hashedTicket.orderId ||
-			ticket.eventId !== hashedTicket.eventId
-		) {
+		if (ticket.eventId !== hashedTicket.eventId) {
 			throw new UnauthorizedException('Ticket is not valid');
 		}
 
@@ -114,10 +111,7 @@ export class TicketsService {
 
 		if (!ticket) throw new NotFoundException('This ticket does not exist');
 
-		if (
-			ticket.orderId !== hashedTicket.orderId ||
-			ticket.eventId !== hashedTicket.eventId
-		) {
+		if (ticket.eventId !== hashedTicket.eventId) {
 			throw new UnauthorizedException('Ticket is not valid');
 		}
 

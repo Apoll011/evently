@@ -11,25 +11,25 @@ import {
 import { FieldValue } from '../orders/dto/create-order.dto';
 
 export type SignTicket = {
+	typeId: string;
 	orderId: string;
 	eventId: string;
 	index: number;
 	holderName: string | null;
-	holderEmail: string | null;
 	customFields: FieldValue[];
 };
 
 export type TicketHash = {
-	orderId: string;
 	eventId: string;
 	index: number;
+	orderIdHash: string;
+	typeIdHash: string;
 	holderNameHash: string;
-	holderEmailHash: string;
 	customFieldsHash: string;
 };
 
-const HASH_BYTES = 16;
-export const FORMAT_VERSION = 2;
+const HASH_BYTES = 4;
+export const FORMAT_VERSION = 5;
 const UUID_RE =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UUID_MARKER = 0xff;
@@ -97,11 +97,11 @@ export class TicketSigningService implements OnModuleInit {
 
 	hashTicket(ticket: SignTicket): TicketHash {
 		return {
-			orderId: ticket.orderId,
-			eventId: ticket.eventId,
 			index: ticket.index,
+			eventId: ticket.eventId,
+			orderIdHash: this.hashField(ticket.orderId),
+			typeIdHash: this.hashField(ticket.typeId),
 			holderNameHash: this.hashField(ticket.holderName),
-			holderEmailHash: this.hashField(ticket.holderEmail),
 			customFieldsHash: this.hashCustomFields(ticket.customFields),
 		};
 	}
@@ -138,10 +138,10 @@ export class TicketSigningService implements OnModuleInit {
 		return Buffer.concat([
 			Buffer.from([FORMAT_VERSION]),
 			Buffer.from([ticket.index]),
-			this.idToBuffer(ticket.orderId),
 			this.idToBuffer(ticket.eventId),
+			this.hashHexToBuffer(ticket.orderIdHash),
+			this.hashHexToBuffer(ticket.typeIdHash),
 			this.hashHexToBuffer(ticket.holderNameHash),
-			this.hashHexToBuffer(ticket.holderEmailHash),
 			this.hashHexToBuffer(ticket.customFieldsHash),
 		]);
 	}
@@ -159,14 +159,14 @@ export class TicketSigningService implements OnModuleInit {
 		const index = buf.readUInt8(offset);
 		offset += 1;
 
-		const order = this.bufferToId(buf, offset);
-		offset = order.next;
 		const event = this.bufferToId(buf, offset);
 		offset = event.next;
 
-		const holderNameHash = this.readHash(buf, offset);
+		const orderIdHash = this.readHash(buf, offset);
 		offset += HASH_BYTES;
-		const holderEmailHash = this.readHash(buf, offset);
+		const ticketIdHash = this.readHash(buf, offset);
+		offset += HASH_BYTES;
+		const holderNameHash = this.readHash(buf, offset);
 		offset += HASH_BYTES;
 		const customFieldsHash = this.readHash(buf, offset);
 		offset += HASH_BYTES;
@@ -176,11 +176,11 @@ export class TicketSigningService implements OnModuleInit {
 		}
 
 		return {
-			orderId: order.id,
-			eventId: event.id,
 			index: index,
+			eventId: event.id,
+			orderIdHash: orderIdHash,
+			typeIdHash: ticketIdHash,
 			holderNameHash,
-			holderEmailHash,
 			customFieldsHash,
 		};
 	}

@@ -4,11 +4,7 @@ import {
 	BadRequestException,
 	NotImplementedException,
 } from '@nestjs/common';
-import {
-	CreateOrderDto,
-	CreateOrderItem,
-	FieldValue,
-} from './dto/create-order.dto';
+import { CreateOrderDto, CreateOrderItem } from './dto/create-order.dto';
 import { DbService } from '../db/db.service';
 import { Order, PaymentStatus, Prisma, TicketStatus } from '@prisma/client';
 import { TicketSigningService } from '../ticket-signing/ticket-signing.service';
@@ -147,11 +143,11 @@ export class OrdersService {
 
 				return Array.from({ length: item.quantity }, (_, index) => {
 					const hash = this.ticketSigningService.hashTicket({
-						orderId: order.id,
+						typeId: item.ticketTypeId,
+						orderId: item.id,
 						eventId: order.eventId,
 						index: index,
 						holderName: order.buyerName,
-						holderEmail: order.buyerEmail,
 						customFields: matchedOrder?.customFields?.[index] ?? [],
 					});
 
