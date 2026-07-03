@@ -39,7 +39,7 @@ export class TicketsController {
 	// t://A7K9X22a6
 	@Post('code/check-in')
 	@ApiBearerAuth('BearerAuthScanner')
-	@UseGuards(ScannerAuthGuard, CheckInOwnershipGuard)
+	@UseGuards(ScannerAuthGuard)
 	checkInCode(
 		@CurrentScanner() scanner: AuthenticatedScanner,
 		@Query('code') code: string,
