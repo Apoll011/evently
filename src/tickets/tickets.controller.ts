@@ -36,6 +36,7 @@ export class TicketsController {
 		return this.ticketsService.checkInSignature(data, signature, gate);
 	}
 
+	// t://A7K9X22a6
 	@Post('code/check-in')
 	@ApiBearerAuth('BearerAuthScanner')
 	@UseGuards(ScannerAuthGuard, CheckInOwnershipGuard)
