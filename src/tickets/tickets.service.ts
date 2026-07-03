@@ -28,6 +28,12 @@ export class TicketsService {
 	}
 
 	async checkIn(data: string, signature: string, gate?: string) {
+		const valid = this.ticketSigningService.verifyPayload(
+			Buffer.from(data, 'base64url'),
+			signature,
+		);
+		if (!valid) throw new UnauthorizedException('Invalid signature');
+
 		let hashedTicket: ReturnType<TicketSigningService['decompress']>;
 		try {
 			hashedTicket = this.ticketSigningService.decompress(data);
@@ -50,12 +56,6 @@ export class TicketsService {
 		if (ticket.eventId !== hashedTicket.eventId) {
 			throw new UnauthorizedException('Ticket is not valid');
 		}
-
-		const valid = this.ticketSigningService.verifyHash(
-			hashedTicket,
-			signature,
-		);
-		if (!valid) throw new UnauthorizedException('Invalid signature');
 
 		const event = ticket.event;
 		if (!event) throw new NotFoundException('Event not found');
@@ -126,10 +126,9 @@ export class TicketsService {
 
 	verifySignature(data: string, signature: string): { valid: boolean } {
 		try {
-			const ticketHash = this.ticketSigningService.decompress(data);
 			return {
-				valid: this.ticketSigningService.verifyHash(
-					ticketHash,
+				valid: this.ticketSigningService.verifyPayload(
+					Buffer.from(data, 'base64url'),
 					signature,
 				),
 			};

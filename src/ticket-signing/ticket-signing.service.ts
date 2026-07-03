@@ -81,18 +81,21 @@ export class TicketSigningService implements OnModuleInit {
 		return this.verifyHash(this.hashTicket(ticket), signature);
 	}
 
-	verifyHash(ticket: TicketHash, signature: string): boolean {
+	verifyPayload(payload: Buffer<ArrayBufferLike>, signature: string): boolean {
 		try {
-			const packed = this.pack(ticket);
 			return verify(
 				null,
-				packed,
+				payload,
 				this.publicKey,
 				Buffer.from(signature, 'base64url'),
 			);
 		} catch {
 			return false;
 		}
+	}
+
+	verifyHash(ticket: TicketHash, signature: string): boolean {
+		return this.verifyPayload(this.pack(ticket), signature)
 	}
 
 	hashTicket(ticket: SignTicket): TicketHash {
