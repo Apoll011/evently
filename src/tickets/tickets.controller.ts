@@ -59,6 +59,17 @@ export class TicketsController {
 		return this.ticketsService.findOneSigned(data, signature);
 	}
 
+	@ApiBearerAuth('BearerAuthScanner')
+	@UseGuards(ScannerAuthGuard)
+	@Get("/code")
+	findOneCode(
+		@CurrentScanner() scanner: AuthenticatedScanner,
+		@Query('code') code: string
+	) {
+		return this.ticketsService.getFromCode(scanner.eventId, code);
+	}
+
+
 	@Get(':id/url')
 	url(@Param('id', ParseUUIDPipe) id: string) {
 		return this.ticketsService.url(id);

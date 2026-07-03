@@ -157,6 +157,22 @@ export class TicketsService {
 		}
 	}
 
+	async getFromCode(eventId: string, ticketCode: string) {
+		const ticket = await this.db.ticket.findUnique({
+			where: {
+				eventId_ticketCode: {
+					eventId,
+					ticketCode
+				}
+			},
+			include: {event: true, ticketType: true},
+		});
+
+		if (!ticket) throw new NotFoundException('Ticket Does not Exist')
+
+		return ticket
+	}
+
 	async cancel(id: string) {
 		return this.transitionOnlyIfIssued(id, TicketStatus.CANCELLED);
 	}
