@@ -38,13 +38,16 @@ const UUID_MARKER = 0xff;
 export class TicketSigningService implements OnModuleInit {
 	private privateKey!: KeyObject;
 	private publicKey!: KeyObject;
+	id!: string;
+	pubKey!: string;
 
 	async onModuleInit() {
-		let privateKeyPem: string, publicKeyPem: string;
+		let privateKeyPem: string, publicKeyPem: string, id: string;
 		try {
-			[privateKeyPem, publicKeyPem] = await Promise.all([
+			[privateKeyPem, publicKeyPem, id] = await Promise.all([
 				readFile('./keys/private.pem', 'utf8'),
 				readFile('./keys/public.pem', 'utf8'),
+				readFile('./keys/.id', 'utf8')
 			]);
 		} catch (err) {
 			throw new Error(
@@ -54,6 +57,8 @@ export class TicketSigningService implements OnModuleInit {
 
 		this.privateKey = createPrivateKey(privateKeyPem);
 		this.publicKey = createPublicKey(publicKeyPem);
+		this.id = id;
+		this.pubKey = publicKeyPem;
 
 		const keyType = this.publicKey.asymmetricKeyType;
 		if (keyType !== 'ed25519' && keyType !== 'ed448') {

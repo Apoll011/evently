@@ -10,6 +10,12 @@ export class AppController {
 		return this.appService.getHello();
 	}
 
+
+	@Get('signing-key')
+	getKey() {
+		return this.appService.getKey();
+	}
+
 	@Get('health')
 	getHealth() {
 		return this.appService.getHealth();
