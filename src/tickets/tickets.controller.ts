@@ -6,7 +6,7 @@ import {
 	ParseUUIDPipe,
 	Query,
 	Post,
-	UseGuards,
+	UseGuards, ParseBoolPipe, DefaultValuePipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { TicketsService } from './tickets.service';
@@ -71,13 +71,14 @@ export class TicketsController {
 
 
 	@Get(':id/url')
-	url(@Param('id', ParseUUIDPipe) id: string) {
-		return this.ticketsService.url(id);
+	url(@Param('id', ParseUUIDPipe) id: string,   @Query('compact', new DefaultValuePipe('false'), ParseBoolPipe) compact: boolean
+	) {
+		return this.ticketsService.url(id, compact);
 	}
 
 	@Get(':id')
 	findOne(@Param('id', ParseUUIDPipe) id: string) {
-		return this.ticketsService.findOne(id);
+		return this.ticketsService.findOne(id, );
 	}
 
 	@Patch(':id/cancel')

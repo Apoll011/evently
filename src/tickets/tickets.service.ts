@@ -199,10 +199,13 @@ export class TicketsService {
 		return this.db.ticket.findUnique({ where: { id } });
 	}
 
-	async url(id: string) {
+	async url(id: string, compact: boolean) {
 		const ticket = await this.db.ticket.findUnique({ where: { id } });
 		if (!ticket) throw new NotFoundException('Ticket Not Found');
 
+		if (compact) {
+			return `t://${ticket.ticketCode}`
+		}
 		return `ticket://v${FORMAT_VERSION}/${ticket.payload}@${ticket.code}`;
 	}
 }
