@@ -8,20 +8,7 @@ import { CreateOrderDto, CreateOrderItem } from './dto/create-order.dto';
 import { DbService } from '../db/db.service';
 import { Order, PaymentStatus, Prisma, TicketStatus } from '@prisma/client';
 import { TicketSigningService } from '../ticket-signing/ticket-signing.service';
-import { randomInt } from 'crypto';
-
-const ALPHABET =
-	'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-function generateCode(length = 8) {
-	let code = '';
-
-	for (let i = 0; i < length; i++) {
-		code += ALPHABET[randomInt(ALPHABET.length)];
-	}
-
-	return code;
-}
+import { generateCode } from '../ticket-signing/helpers';
 
 @Injectable()
 export class OrdersService {
@@ -156,8 +143,11 @@ export class OrdersService {
 				const matchedOrder = orderItemMap.get(item.ticketTypeId);
 
 				return Array.from({ length: item.quantity }, (_, index) => {
+					const code =  generateCode();
+
 					const hash = this.ticketSigningService.hashTicket({
 						typeId: item.ticketTypeId,
+						ticketCode: code,
 						orderId: item.id,
 						eventId: order.eventId,
 						index: index,
@@ -170,7 +160,7 @@ export class OrdersService {
 						ticketTypeId: item.ticketTypeId,
 						eventId: order.eventId,
 						code: this.ticketSigningService.signHashed(hash),
-						ticketCode: generateCode(),
+						ticketCode: code,
 						payload: this.ticketSigningService.compress(hash),
 						index: index,
 						status: TicketStatus.ISSUED,

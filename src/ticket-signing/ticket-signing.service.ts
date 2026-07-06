@@ -9,8 +9,10 @@ import {
 	KeyObject,
 } from 'node:crypto';
 import { FieldValue } from '../orders/dto/create-order.dto';
+import { ticketCodeSize } from './helpers';
 
 export type SignTicket = {
+	ticketCode: string;
 	typeId: string;
 	orderId: string;
 	eventId: string;
@@ -20,6 +22,7 @@ export type SignTicket = {
 };
 
 export type TicketHash = {
+	ticketCode: string;
 	eventId: string;
 	index: number;
 	orderIdHash: string;
@@ -105,6 +108,7 @@ export class TicketSigningService implements OnModuleInit {
 
 	hashTicket(ticket: SignTicket): TicketHash {
 		return {
+			ticketCode: ticket.ticketCode,
 			index: ticket.index,
 			eventId: ticket.eventId,
 			orderIdHash: this.hashField(ticket.orderId),
@@ -146,6 +150,7 @@ export class TicketSigningService implements OnModuleInit {
 		return Buffer.concat([
 			Buffer.from([FORMAT_VERSION]),
 			Buffer.from([ticket.index]),
+			Buffer.from(ticket.ticketCode),
 			this.idToBuffer(ticket.eventId),
 			this.hashHexToBuffer(ticket.orderIdHash),
 			this.hashHexToBuffer(ticket.typeIdHash),
@@ -167,6 +172,9 @@ export class TicketSigningService implements OnModuleInit {
 		const index = buf.readUInt8(offset);
 		offset += 1;
 
+		const code = this.readCode(buf, offset);
+		offset += ticketCodeSize;
+
 		const event = this.bufferToId(buf, offset);
 		offset = event.next;
 
@@ -185,6 +193,7 @@ export class TicketSigningService implements OnModuleInit {
 
 		return {
 			index: index,
+			ticketCode: code,
 			eventId: event.id,
 			orderIdHash: orderIdHash,
 			typeIdHash: ticketIdHash,
@@ -246,5 +255,11 @@ export class TicketSigningService implements OnModuleInit {
 		if (offset + HASH_BYTES > buf.length)
 			throw new Error('Ticket payload truncated (hash)');
 		return buf.subarray(offset, offset + HASH_BYTES).toString('hex');
+	}
+
+		private readCode(buf: Buffer, offset: number): string {
+		if (offset + ticketCodeSize > buf.length)
+			throw new Error('Ticket payload truncated (hash)');
+		return buf.subarray(offset, offset + ticketCodeSize).toString();
 	}
 }
